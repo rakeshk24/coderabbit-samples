@@ -11,3 +11,9 @@ reviews:
           - Auth checks bypassed, missing on sensitive endpoints, or JWT verified with a weak/hardcoded secret
           - Dangerous functions used: eval, exec, pickle.loads, dangerouslySetInnerHTML, or TLS verification disabled
           - Outbound HTTP requests made to a user-controlled URL without an allowlist (SSRF)
+      - name: "No sensitive data in logs"
+        mode: "error"
+        instructions: |
+          Fail if logs expose secrets or personal data
+          (tokens, passwords, auth headers, cookies, PII).
+          Pass if logs are redacted or contain only safe fields.
