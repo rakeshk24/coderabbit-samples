@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+reviews:
+  poem: false
+  path_instructions:
+    - path: '**/*'
+      instructions: |
+        Perform a security-focused code review. Ignore style, formatting, and non-security concerns entirely.
+
+        Your goal is to identify every security vulnerability, unsafe pattern, and risk surface in this code.
+
+        Review across the following categories:
+
+        1. Secrets & Credential Exposure
+           - hardcoded API keys, tokens, passwords, or private keys
+           - secrets committed in config files, environment files, or source code
+           - credentials logged or returned in responses
+           - insecure storage of sensitive values (plaintext, weak encryption)
+
+        2. Injection Attacks
+           - SQL injection (raw queries, string concatenation)
+           - NoSQL injection
+           - Command injection (shell execution with user input)
+           - LDAP, XPath, and template injection
+           - HTML/JS injection leading to XSS (reflected, stored, DOM-based)
+
+        3. Authentication & Authorization
+           - missing or bypassable authentication checks
+           - broken access control (IDOR, privilege escalation)
+           - insecure session management (weak tokens, no expiry, no invalidation)
+           - JWT issues (none algorithm, weak secrets, missing validation)
+           - OAuth/OIDC misconfigurations
+
+        4. Server-Side Request Forgery (SSRF)
+           - user-controlled URLs used in server-side HTTP requests
+           - missing allowlist/denylist for outbound request targets
+           - internal metadata endpoint exposure (e.g., AWS IMDSv1)
+           - DNS rebinding risks
+
+        5. Vulnerable Dependencies
+           - known CVEs in imported packages or libraries
+           - outdated dependencies with published security advisories
+           - use of deprecated or abandoned packages with known risks
+           - unpinned dependency versions that could pull in malicious updates
+
+        6. Insecure Data Handling
+           - sensitive data in URLs, query params, or logs
+           - PII or financial data stored or transmitted without encryption
+           - missing TLS enforcement or insecure TLS configuration
+           - insecure deserialization (untrusted input passed to deserializers)
+
+        7. Static Analysis Patterns
+           - use of dangerous functions (eval, exec, system, pickle.loads, etc.)
+           - unsafe regular expressions vulnerable to ReDoS
+           - path traversal via unsanitized file paths
+           - open redirects via user-controlled URLs
+           - timing attacks in cryptographic comparisons
+
+        8. Cryptography
+           - use of weak or broken algorithms (MD5, SHA1, DES, RC4)
+           - hardcoded IVs, salts, or weak random number generation
+           - improper certificate validation or TLS verification disabled
+           - insecure key sizes or key management
+
+        9. Input Validation & Output Encoding
+           - missing validation on user-supplied input at trust boundaries
+           - lack of output encoding in HTML, JS, SQL, shell, or URL contexts
+           - file upload vulnerabilities (missing type/size/content validation)
+           - HTTP header injection
+
+        10. Infrastructure & Configuration
+            - overly permissive CORS policies
+            - missing security headers (CSP, HSTS, X-Frame-Options, etc.)
+            - debug mode or verbose error messages enabled in production
+            - insecure default configurations or unnecessary exposed endpoints
+
+        Output requirements:
+        - Report every security finding regardless of severity.
+        - Include severity: Critical, High, Medium, or Low.
+        - Provide a clear explanation of the risk and a concrete suggested fix.
+        - Reference the relevant CWE or OWASP category where applicable.
+        - Do not skip findings to keep comments short — completeness is required.
+issue_enrichment:
+  planning:
+    enabled: false
