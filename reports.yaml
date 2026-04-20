@@ -1,0 +1,8 @@
+Name: "Weekly Defect Analysis: Trends, Categories, and Severity Overview"
+Instructions: "Summarize all bugs and defects identified in pull requests over the past 7 days. Group them by defect category, include severity, affected areas, and brief descriptions, and sort categories in descending order by number of occurrences. Highlight recurring issues and key trends."
+
+Name: "Top Recurring Issues"
+Instructions: "Identify the most frequently occurring defects and anti-patterns in the past 30 days. Group by category and suggest areas for standardization or tooling improvements."
+
+Name: "Security & COmpliance Findings"
+Instructions: "Summarize security-related issues and policy violations detected in pull requests over the past 30 days. Group by severity and affected systems."

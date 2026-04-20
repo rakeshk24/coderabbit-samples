@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+enable_free_tier: false
+poem: false
+reviews:
+    review_details: true
+    path_filters:
+    - '!**/*.bin'
+    - '!**/*.bz2'
+    - '!**/*.dat'
+    - '!**/*.dll'
+    - '!**/*.egg'
+    - '!**/*.glif'
+    - '!**/*.gz'
+    - '!**/*.zip'
+    - '!**/*.7z'
+    - '!**/*.jar'
+    - '!**/*.tar'
+    - '!**/*.war'
+    - '!**/*.lo'
+    - '!**/*.log'
+    - '!**/*.mp3'
+    - '!**/*.wav'
+    - '!**/*.wma'
+    - '!**/*.mp4'
+    - '!**/*.avi'
+    - '!**/*.mkv'
+    - '!**/*.wmv'
+    - '!**/*.svg'
+    - '!**/*.jpeg'
+    - '!**/*.jpg'
+    - '!**/*.png'
+    - '!**/*.gif'
