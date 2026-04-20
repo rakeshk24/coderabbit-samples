@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+reviews:
+  pre_merge_checks:
+    custom_checks:
+      - name: "security checks"
+        mode: "error"
+        instructions: |
+          Fail if any of the following are detected:
+          - Secrets or credentials hardcoded or logged (API keys, tokens, passwords; patterns: sk_live_*, AKIA*, ghp_*, *_SECRET, *_TOKEN, *_PRIVATE_KEY)
+          - User input passed unsanitized to SQL queries, shell commands, eval(), or HTML output (injection/XSS)
+          - Auth checks bypassed, missing on sensitive endpoints, or JWT verified with a weak/hardcoded secret
+          - Dangerous functions used: eval, exec, pickle.loads, dangerouslySetInnerHTML, or TLS verification disabled
+          - Outbound HTTP requests made to a user-controlled URL without an allowlist (SSRF)
