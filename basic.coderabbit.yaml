@@ -1,19 +1,18 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+enable_free_tier: false
 reviews:
   poem: false
+  review_details: true
   path_instructions:
     - path: '**/*'
       instructions: |
         Perform a high-signal code review focused on the most important issues only.
-
         Prioritize issues that are likely to cause:
         - correctness problems
         - regressions
         - security issues
         - meaningful maintainability risks
-
         Do not flood the review with minor nits, style-only suggestions, or speculative concerns.
-
         Focus on:
         1. Bugs & Correctness
            - broken logic
