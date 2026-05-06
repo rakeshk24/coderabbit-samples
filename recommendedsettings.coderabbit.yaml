@@ -19,6 +19,5 @@ reviews:
     - '!**/*.jpeg'
 knowledge_base:
   code_guidelines:
-  enabled: true
-  filePatterns:
-    - "**/CODING_GUIDELINES.md"
+    filePatterns:
+      - "**/CODING_GUIDELINES.md"

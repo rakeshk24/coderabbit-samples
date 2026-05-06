@@ -41,9 +41,8 @@ reviews:
         This mode is for fast review turnaround. Do not try to enumerate every minor issue.
 knowledge_base:
   code_guidelines:
-  enabled: true
-  filePatterns:
-    - "**/CODING_GUIDELINES.md"
+    filePatterns:
+      - "**/CODING_GUIDELINES.md"
 issue_enrichment:
   planning:
     enabled: false
