@@ -1,14 +1,24 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 enable_free_tier: false
-poem: false
+early_access: false
 reviews:
-    review_details: true
-    path_filters:
+  poem: false
+  review_details: true
+  path_instructions:
+    - path: '**/*'
+      instructions: |
+        - Define what good looks like to you here
+        - Be specific. Do not leave room for ambiguity
+  path_filters:
     - '!**/*.bin'
     - '!**/*.zip'
     - '!**/*.7z'
     - '!**/*.jar'
     - '!**/*.tar'
-    - '!**/*.log'
     - '!**/*.mp3'
     - '!**/*.jpeg'
+knowledge_base:
+  code_guidelines:
+  enabled: true
+  filePatterns:
+    - "**/CODING_GUIDELINES.md"
