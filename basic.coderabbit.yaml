@@ -1,5 +1,6 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 enable_free_tier: false
+early_access: false
 reviews:
   poem: false
   review_details: true
