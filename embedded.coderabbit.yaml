@@ -1,0 +1,89 @@
+reviews:
+  path_instructions:
+    - path: "**/*.{c,cc,cpp,h,hpp,s,S}"
+      instructions: |
+        - Review as production embedded systems/firmware code with emphasis on correctness, determinism, safety, memory integrity, and hardware reliability.
+        - Flag undefined behavior, unsafe pointer arithmetic, unchecked buffer access, integer overflow, signed/unsigned mismatch, and uninitialized memory usage.
+        - Ensure interrupt handlers are minimal, deterministic, and avoid blocking operations or dynamic allocation.
+        - Flag dynamic memory allocation in real-time or constrained execution paths unless explicitly justified.
+        - Ensure concurrency/shared-state access is protected appropriately for ISR, DMA, RTOS, or multicore interaction.
+        - Flag busy-wait loops, timing assumptions, or race conditions without explicit synchronization or timeout handling.
+        - Prefer explicit-width integer types and hardware-safe abstractions for registers and memory-mapped IO.
+        - Ensure volatile usage is intentional and not used as a synchronization substitute.
+        - Flag duplicated low-level hardware logic that should be centralized in drivers/HAL layers.
+        - Ensure error handling exists for hardware initialization, peripheral communication, watchdog interaction, and startup sequencing.
+
+    - path: "**/{drivers,bsp,hal,board,platform}/**"
+      instructions: |
+        - Review hardware abstraction and driver code for portability, determinism, and hardware safety.
+        - Ensure register manipulation is explicit, documented, and masked safely.
+        - Flag magic numbers for register fields, timing values, GPIO configuration, or memory addresses.
+        - Prefer centralized hardware definitions and reusable peripheral abstractions.
+        - Ensure initialization order is deterministic and dependency-aware.
+        - Flag drivers that assume a single board revision, clock configuration, or hardware state without validation.
+        - Ensure peripheral failures, timeouts, retries, and recovery behavior are handled explicitly.
+        - Prefer non-blocking or interrupt/DMA-driven communication where appropriate.
+
+    - path: "**/{rtos,freertos,zephyr,threadx}/**"
+      instructions: |
+        - Review RTOS-related code for task safety, scheduling correctness, and real-time behavior.
+        - Flag blocking operations inside high-priority tasks or interrupt context.
+        - Ensure stack sizes, task priorities, queues, semaphores, and timers are intentionally configured.
+        - Flag potential deadlocks, priority inversion, starvation, or unbounded queue growth.
+        - Ensure shared resources are synchronized correctly and do not rely on timing assumptions.
+        - Prefer deterministic scheduling behavior over implicit execution ordering.
+        - Ensure watchdog handling and task recovery behavior are well defined.
+
+    - path: "**/*.{ld,map,cmake,make,mak,CMakeLists.txt}"
+      instructions: |
+        - Review embedded build/linker configuration for reproducibility, memory safety, and deployment correctness.
+        - Ensure linker scripts correctly define memory regions, stack/heap placement, vector tables, and section boundaries.
+        - Flag overlapping memory regions, unchecked stack growth, or unsafe heap configuration.
+        - Ensure optimization/debug flags are intentional and appropriate for production firmware.
+        - Flag architecture-specific assumptions that reduce portability without documentation.
+        - Prefer deterministic builds, explicit compiler flags, and reproducible artifact generation.
+
+    - path: "**/*.{yaml,yml,json,ini,conf}"
+      instructions: |
+        - Review embedded configuration for hardware safety, environment correctness, and deployment reliability.
+        - Flag hardcoded secrets, debug credentials, manufacturing keys, certificates, or provisioning data.
+        - Ensure board-specific configuration is isolated and clearly named.
+        - Flag unsafe defaults such as disabled watchdogs, disabled brownout detection, unrestricted debug access, or verbose production logging.
+        - Ensure timing, clock, power, and communication settings are explicitly documented and validated.
+        - Prefer explicit feature flags and capability configuration over hidden compile-time assumptions.
+
+    - path: "**/{bootloader,startup,secureboot}/**"
+      instructions: |
+        - Review boot and startup code for reliability, recoverability, and security.
+        - Ensure firmware update flows support rollback, recovery, and interrupted-update handling.
+        - Flag unsigned firmware loading, insecure boot paths, or bypassable verification checks.
+        - Ensure startup code initializes clocks, memory, interrupts, caches, and watchdogs in a deterministic order.
+        - Flag assumptions about persistent state after reset or power loss.
+        - Prefer fail-safe startup behavior and explicit boot-state validation.
+
+    - path: "**/{protocols,can,uart,spi,i2c,ethernet,ble,usb}/**"
+      instructions: |
+        - Review communication stack code for robustness and interoperability.
+        - Ensure framing, retries, CRC/checksum validation, timeouts, and malformed packet handling are explicit.
+        - Flag unchecked buffer boundaries, packet length assumptions, or trust of external input.
+        - Ensure communication failures degrade safely and do not deadlock the system.
+        - Prefer explicit state machines over implicit protocol sequencing logic.
+        - Flag protocol handling that can block real-time execution paths.
+
+    - path: "**/*.{test,spec}.c"
+      instructions: |
+        - Review embedded tests for determinism, hardware realism, and regression coverage.
+        - Ensure tests cover startup behavior, communication failures, timeout handling, and edge conditions.
+        - Prefer hardware abstraction mocking over direct hardware dependency where appropriate.
+        - Flag tests dependent on timing flakiness, real hardware state leakage, or execution ordering assumptions.
+        - Ensure boundary conditions, memory constraints, and fault-injection scenarios are tested where relevant.
+        - Prefer reproducible fixtures and deterministic simulated inputs.
+
+    - path: "**/{manufacturing,factory,provisioning,calibration}/**"
+      instructions: |
+        - Review manufacturing/provisioning flows for device safety, traceability, and operational correctness.
+        - Flag plaintext storage or logging of provisioning secrets, certificates, serial numbers, or device credentials.
+        - Ensure calibration values, hardware identifiers, and provisioning state are validated before persistence.
+        - Flag irreversible operations without verification or recovery paths.
+        - Ensure provisioning scripts and firmware behave safely on partial failure or interrupted execution.
+        - Prefer auditable and repeatable provisioning flows suitable for scaled manufacturing.
