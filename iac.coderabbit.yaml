@@ -1,0 +1,74 @@
+reviews:
+  path_instructions:
+    - path: "**/*.{tf,tfvars,hcl}"
+      instructions: |
+        - Review as Terraform/OpenTofu IaC for production reliability, security, and maintainability.
+        - Flag any public network exposure unless the PR clearly justifies it.
+        - Flag wildcard IAM permissions such as "*" or overly broad principals.
+        - Flag unencrypted storage, missing backup/retention settings, missing versioning, or disabled deletion protection.
+        - Flag hardcoded secrets, tokens, passwords, private keys, or sensitive values in variables, locals, outputs, or provider config.
+        - Ensure every new resource has explicit ownership tags, environment tags, and cost-center/project tags when the provider supports tags.
+        - Ensure modules expose clear inputs/outputs and avoid leaking provider-specific implementation details through unnecessary outputs.
+        - Prefer least-privilege IAM, private networking, explicit dependencies only when needed, and stable resource names.
+        - Flag changes that can destroy, recreate, or replace stateful resources unless the PR description explicitly calls out migration/rollback impact.
+        - Check that variables have types, descriptions, safe defaults, and validation blocks for constrained values.
+        - Check that outputs marked sensitive=true when they expose secrets, credentials, ARNs/IDs that should not be logged, or connection strings.
+
+    - path: "**/*.{yaml,yml}"
+      instructions: |
+        - Review YAML as Kubernetes, Helm, CI/CD, or infrastructure configuration based on file content.
+        - Flag plaintext secrets, credentials, kubeconfigs, tokens, certificates, or private keys.
+        - For Kubernetes workloads, require resource requests and limits for CPU and memory unless explicitly justified.
+        - For Kubernetes workloads, flag privileged containers, hostNetwork, hostPID, hostIPC, allowPrivilegeEscalation=true, runAsUser=0, or missing readOnlyRootFilesystem unless justified.
+        - For Kubernetes services/ingress, flag public exposure, broad CIDRs, disabled TLS, or missing authentication annotations unless intended.
+        - For Helm values, ensure defaults are safe for production and do not enable debug, insecure TLS, anonymous access, or public ingress by default.
+        - For CI/CD workflows, flag unpinned third-party actions/images, broad write permissions, secret exposure in logs, and deployment steps without environment protections.
+        - Prefer explicit namespaces, labels, probes, rollout strategy, and disruption budgets for production workloads.
+
+    - path: "**/Dockerfile*"
+      instructions: |
+        - Flag use of latest or unpinned base images.
+        - Flag running containers as root unless explicitly required.
+        - Require multi-stage builds when build tools or compilers are not needed at runtime.
+        - Flag package installs without cleanup of package manager cache.
+        - Flag copied secrets, SSH keys, cloud credentials, npm tokens, pip tokens, or kubeconfigs.
+        - Prefer minimal runtime images, explicit health checks when applicable, and deterministic dependency installation.
+        - Check that exposed ports match the application contract and do not expose unnecessary services.
+
+    - path: "**/*.{sh,bash,zsh}"
+      instructions: |
+        - Review shell scripts for safe automation in production infrastructure.
+        - Flag destructive commands such as rm -rf, terraform destroy, kubectl delete, or cloud resource deletion unless gated by explicit confirmation or environment checks.
+        - Require set -euo pipefail for non-trivial bash scripts unless there is a clear reason not to.
+        - Quote variable expansions unless word splitting is intentional and documented.
+        - Flag curl|bash, wget|sh, or unauthenticated downloads unless checksums/signatures are verified.
+        - Ensure scripts fail safely, do not leak secrets in logs, and handle missing env vars explicitly.
+
+    - path: "**/.github/workflows/*.{yaml,yml}"
+      instructions: |
+        - Review GitHub Actions for supply-chain security, least privilege, and safe deployments.
+        - Require explicit permissions blocks with the minimum required scopes.
+        - Flag third-party actions not pinned to a full commit SHA for security-sensitive workflows.
+        - Flag pull_request_target usage unless the workflow is demonstrably safe for untrusted input.
+        - Flag secrets passed to scripts, logs, Docker build args, or third-party actions without a clear need.
+        - Ensure deployment jobs use environments, approvals, concurrency controls, and branch restrictions when appropriate.
+        - Flag workflows that deploy from forks, untrusted branches, or mutable tags.
+
+    - path: "**/{kustomization.yaml,Chart.yaml,values.yaml,values.*.yaml}"
+      instructions: |
+        - Review as Kubernetes packaging/configuration.
+        - Flag production defaults that enable public ingress, weak auth, debug mode, permissive CORS, insecure TLS, or anonymous access.
+        - Ensure image tags are explicit and not latest.
+        - Ensure configurable securityContext, resources, probes, node selectors/tolerations, and affinity when relevant.
+        - For Helm charts, ensure values are documented, typed where possible, and safe for both entry-level and experienced operators.
+        - Flag templates that render invalid YAML, duplicate names, unstable resource names, or environment-specific hardcoding.
+
+    - path: "**/{main.tf,variables.tf,outputs.tf,providers.tf,backend.tf}"
+      instructions: |
+        - Review as core Terraform/OpenTofu module interface.
+        - Ensure provider versions are constrained and not left floating.
+        - Ensure backend configuration does not include credentials or local-only state for shared environments.
+        - Ensure input variables are minimal, typed, documented, validated, and avoid exposing unnecessary complexity.
+        - Ensure outputs are intentional, documented, and marked sensitive when appropriate.
+        - Flag breaking module interface changes unless migration notes are included in the PR.
+        - Prefer opinionated safe defaults over exposing raw low-level provider knobs.
