@@ -1,0 +1,87 @@
+reviews:
+  path_instructions:
+    - path: "**/*.{ts,tsx,js,jsx}"
+      instructions: |
+        - Review as production frontend application code with emphasis on accessibility, maintainability, performance, and security.
+        - Flag unsafe usage of dangerouslySetInnerHTML, direct DOM manipulation, eval, or unsanitized user-generated content.
+        - Flag unnecessary useEffect usage when logic can be derived during render or memoized safely.
+        - Prefer predictable state management and avoid prop drilling when composition or context is more appropriate.
+        - Flag large components that mix rendering, data fetching, and business logic without separation of concerns.
+        - Ensure async UI states are handled explicitly: loading, empty, error, success, and retry states.
+        - Ensure forms validate both client-side UX and server-side assumptions.
+        - Flag console.log/debug leftovers in production paths.
+        - Prefer strict typing over any, unknown casts, or non-null assertions unless clearly justified.
+        - Flag duplicated UI/business logic that should be extracted into reusable hooks, utilities, or components.
+        - Prefer stable keys in lists and avoid array index keys for dynamic collections.
+        - Ensure user-visible errors are actionable and do not expose internal implementation details.
+
+    - path: "**/*.{tsx,jsx}"
+      instructions: |
+        - Review React components for rendering performance, accessibility, and composability.
+        - Ensure interactive elements are keyboard accessible and use semantic HTML before adding ARIA.
+        - Flag clickable div/span patterns when button or anchor elements should be used.
+        - Ensure forms, modals, menus, dialogs, and dropdowns have correct focus handling and keyboard navigation.
+        - Flag unnecessary re-renders caused by inline object/function creation when it impacts frequently rendered components.
+        - Prefer composition over deeply nested conditional rendering.
+        - Ensure loading skeletons/spinners do not cause layout shifts.
+        - Ensure images include alt text unless explicitly decorative.
+        - Ensure links/buttons have accessible names and icon-only buttons include labels.
+        - Flag hydration mismatch risks in SSR/Next.js applications.
+        - Prefer server components or SSR-safe patterns when appropriate instead of excessive client-side fetching.
+
+    - path: "**/*.{css,scss,module.css,module.scss}"
+      instructions: |
+        - Review styling for maintainability, responsiveness, and consistency.
+        - Flag hardcoded magic numbers, fixed heights causing overflow, or viewport-breaking layouts.
+        - Prefer design tokens, variables, and shared spacing/typography systems over one-off values.
+        - Ensure responsive behavior across mobile, tablet, and desktop breakpoints.
+        - Flag excessive specificity, !important usage, or deeply nested selectors.
+        - Ensure animations/transitions are subtle and respect reduced-motion preferences.
+        - Flag styles that can cause layout thrashing or expensive repaint/reflow behavior.
+
+    - path: "**/{package.json,pnpm-lock.yaml,package-lock.json,yarn.lock}"
+      instructions: |
+        - Review frontend dependencies for security, bundle size, and maintainability impact.
+        - Flag unnecessary large dependencies for trivial functionality.
+        - Prefer actively maintained libraries with strong ecosystem adoption.
+        - Flag duplicate libraries solving the same problem unless justified.
+        - Flag dependencies with postinstall scripts, broad permissions, or known risky patterns.
+        - Ensure runtime dependencies are not incorrectly added as devDependencies and vice versa.
+        - Prefer exact or controlled version ranges for critical frontend infrastructure libraries.
+
+    - path: "**/*.{test,spec}.{ts,tsx,js,jsx}"
+      instructions: |
+        - Review frontend tests for user-centric behavior validation rather than implementation coupling.
+        - Prefer testing user interactions and observable behavior over internal state.
+        - Flag brittle snapshot overuse unless snapshots provide clear long-term value.
+        - Ensure edge cases, loading states, error states, and accessibility behaviors are covered.
+        - Prefer deterministic tests without arbitrary sleeps or timing assumptions.
+        - Flag mocked behavior that diverges significantly from production behavior.
+        - Ensure critical business flows have integration-level coverage where appropriate.
+
+    - path: "**/{next.config.js,next.config.mjs,vite.config.ts,webpack.config.js}"
+      instructions: |
+        - Review frontend build configuration for security and performance implications.
+        - Flag client exposure of server-only environment variables or secrets.
+        - Ensure source maps, debug flags, and dev tooling are not unintentionally enabled in production.
+        - Flag oversized bundle risks, unnecessary polyfills, or broad transpilation targets.
+        - Prefer code splitting, lazy loading, and route-level chunking for large applications.
+        - Ensure asset caching and cache-busting strategies are production-safe.
+        - Flag configuration that weakens CSP, CORS, or browser security protections without justification.
+
+    - path: "**/*.{json}"
+      instructions: |
+        - Review frontend configuration and localization files for correctness and maintainability.
+        - Flag duplicated config values that should be centralized.
+        - Ensure localization keys are stable, descriptive, and not coupled to English copy.
+        - Flag large static JSON payloads that should be fetched dynamically or paginated.
+        - Ensure feature flags default safely and do not unintentionally expose unfinished functionality.
+
+    - path: "**/{routes,router,app,pages}/**"
+      instructions: |
+        - Review routing and page-level code for UX consistency, auth safety, and performance.
+        - Ensure protected routes enforce authorization both in UI behavior and backend assumptions.
+        - Flag unnecessary client-side fetching when SSR/SSG/server loaders are more appropriate.
+        - Ensure route-level loading and error boundaries exist for critical user flows.
+        - Prefer progressive rendering and streaming-safe patterns when supported by the framework.
+        - Flag navigation flows that can create inconsistent browser history or broken deep linking.

@@ -1,0 +1,66 @@
+reviews:
+  path_instructions:
+    - path: "**/*.{test,spec}.{ts,tsx,js,jsx,py,java,kt,go,rb,cs}"
+      instructions: |
+        - Review tests for behavior coverage, reliability, maintainability, and defect prevention.
+        - Prefer user-visible behavior and API contracts over implementation details.
+        - Flag brittle assertions tied to DOM structure, private methods, internal state, or exact error wording unless intentional.
+        - Ensure tests cover happy paths, edge cases, invalid input, authorization failures, and regression-prone behavior.
+        - Flag arbitrary sleeps, timing assumptions, shared mutable state, or order-dependent tests.
+        - Ensure fixtures are minimal, deterministic, and representative of real production data.
+        - Prefer clear test names that describe behavior, condition, and expected outcome.
+        - Flag overuse of mocks when integration or contract coverage would catch real defects.
+        - Ensure skipped/flaky tests include explicit justification and owner.
+
+    - path: "**/{e2e,cypress,playwright,selenium}/**"
+      instructions: |
+        - Review end-to-end tests for stability, user relevance, and CI suitability.
+        - Prefer resilient selectors such as role, label, text, or stable test IDs over CSS/XPath tied to layout.
+        - Flag tests that depend on execution order, external services, real user accounts, or uncontrolled data.
+        - Ensure critical flows cover login, permissions, create/update/delete, checkout/payment-like flows, and error recovery where applicable.
+        - Flag fixed waits; prefer waiting on user-visible state, network completion, or explicit app signals.
+        - Ensure screenshots, traces, and logs are captured only on failure when practical.
+        - Keep E2E scope focused on high-value workflows; avoid duplicating lower-level unit/integration coverage.
+
+    - path: "**/{fixtures,mocks,testdata,factories}/**"
+      instructions: |
+        - Review test data for realism, determinism, privacy, and maintainability.
+        - Flag production PII, secrets, tokens, credentials, or customer data in fixtures.
+        - Prefer compact fixtures that express only fields relevant to the test.
+        - Ensure generated data is deterministic unless randomness is explicitly seeded.
+        - Flag stale fixtures that no longer match current schemas or API contracts.
+        - Prefer factories/builders for repeated object setup instead of large copy-pasted fixtures.
+
+    - path: "**/{openapi,swagger,proto,graphql}/**"
+      instructions: |
+        - Review API contracts for testability, backward compatibility, and edge-case clarity.
+        - Ensure required fields, optional fields, enums, error responses, and auth requirements are explicit.
+        - Flag breaking contract changes without corresponding test updates.
+        - Ensure negative cases and validation failures are representable in contract tests.
+        - Prefer examples that include realistic success and failure payloads.
+
+    - path: "**/.github/workflows/*.{yaml,yml}"
+      instructions: |
+        - Review CI quality gates for reliability, speed, and actionable feedback.
+        - Ensure test jobs run on relevant code changes and are not accidentally skipped.
+        - Flag workflows that hide failures with continue-on-error unless explicitly justified.
+        - Ensure flaky-test retries do not mask persistent product defects.
+        - Prefer parallelization and caching without introducing order dependency.
+        - Ensure artifacts such as coverage reports, screenshots, traces, and logs are retained for failed runs.
+
+    - path: "**/*.{yaml,yml,json}"
+      instructions: |
+        - Review QA/test configuration for correctness, reproducibility, and safe defaults.
+        - Flag disabled tests, relaxed assertions, broad ignore patterns, or hidden exclusions.
+        - Ensure timeouts are realistic and not masking performance regressions.
+        - Ensure environment-specific URLs, credentials, and feature flags are externalized.
+        - Prefer explicit browser/device/test matrix configuration for supported environments.
+        - Flag config that makes local, CI, and staging behavior diverge without documentation.
+
+    - path: "**/{coverage,quality,sonar,jest,vitest,pytest,karma,mocha}/**"
+      instructions: |
+        - Review quality tooling configuration for meaningful signal over vanity metrics.
+        - Flag coverage thresholds that are reduced without justification.
+        - Ensure coverage focuses on critical business paths, not only line coverage.
+        - Flag exclusions that remove risky or frequently changed code from analysis.
+        - Prefer actionable rules that prevent real defects over noisy style-only gates.

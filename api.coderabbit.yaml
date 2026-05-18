@@ -1,0 +1,90 @@
+reviews:
+  path_instructions:
+    - path: "**/*.{go,py,java,kt,rb,rs,cs,ts,js}"
+      instructions: |
+        - Review as production backend/API service code with emphasis on correctness, reliability, security, maintainability, and backward compatibility.
+        - Flag breaking API contract changes unless explicitly documented in the PR.
+        - Ensure request validation, input sanitization, and output encoding are handled explicitly.
+        - Flag business logic mixed directly inside controllers/handlers/routes when it should live in service/domain layers.
+        - Ensure errors are structured, actionable, and do not leak internal implementation details, secrets, stack traces, or infrastructure metadata.
+        - Prefer idempotent behavior for retryable operations and external integrations.
+        - Flag hidden side effects, implicit state mutations, or non-deterministic behavior.
+        - Ensure pagination, filtering, sorting, and limits exist for collection/list endpoints.
+        - Prefer explicit types/contracts over loosely typed payloads or dynamic maps.
+        - Flag duplicated validation, authorization, or serialization logic that should be centralized.
+        - Ensure concurrency/thread safety when shared state, caches, or async execution are involved.
+
+    - path: "**/{routes,router,controllers,handlers,api}/**"
+      instructions: |
+        - Review API handlers/controllers for security, request lifecycle correctness, and contract stability.
+        - Ensure authentication and authorization checks happen before accessing protected resources.
+        - Flag endpoints that expose internal identifiers, sensitive metadata, or excessive response payloads.
+        - Ensure consistent HTTP status codes and error response formats across endpoints.
+        - Prefer explicit API versioning strategies for externally consumed APIs.
+        - Flag synchronous/blocking work inside request handlers when async/background processing is more appropriate.
+        - Ensure request timeouts, retries, and cancellation handling are respected.
+        - Flag endpoints vulnerable to mass assignment, injection, insecure deserialization, or IDOR patterns.
+
+    - path: "**/{models,schemas,dto,serializers}/**"
+      instructions: |
+        - Review schemas/models/contracts for API consistency and long-term maintainability.
+        - Ensure fields have explicit validation, constraints, and safe defaults where applicable.
+        - Flag nullable/optional fields that create ambiguous API behavior without documentation.
+        - Prefer backward-compatible schema evolution over destructive field renames/removals.
+        - Ensure sensitive fields are excluded from serialization and logs.
+        - Flag overexposed internal persistence models being returned directly as API responses.
+        - Prefer explicit enums/constants over free-form string values for constrained states.
+
+    - path: "**/{middleware,filters,interceptors}/**"
+      instructions: |
+        - Review middleware/interceptors for security, observability, and request isolation.
+        - Ensure authentication, authorization, tracing, correlation IDs, and rate limiting are consistently enforced.
+        - Flag middleware that mutates requests/responses in non-obvious ways.
+        - Ensure logging avoids secrets, tokens, passwords, API keys, session identifiers, and PII.
+        - Prefer centralized error handling and request instrumentation.
+        - Flag global middleware that introduces unnecessary latency or blocking I/O.
+
+    - path: "**/{db,migrations,sql,prisma}/**"
+      instructions: |
+        - Review database changes for safety, performance, and rollback readiness.
+        - Flag destructive schema migrations without backward-compatible rollout strategy.
+        - Ensure indexes exist for newly introduced query paths, joins, foreign keys, and high-cardinality filters.
+        - Flag N+1 query risks, full table scans, or unbounded queries.
+        - Ensure migrations are idempotent, reversible when possible, and safe for production deployment order.
+        - Prefer additive migrations before destructive cleanup migrations.
+        - Flag application code assumptions that depend on immediate migration completion across distributed deployments.
+
+    - path: "**/*.{yaml,yml,json}"
+      instructions: |
+        - Review API/service configuration for security and operational safety.
+        - Flag hardcoded secrets, credentials, tokens, certificates, or private endpoints.
+        - Ensure environment-specific configuration is externalized and not embedded in source code.
+        - Flag insecure defaults such as debug mode, permissive CORS, disabled auth, or verbose error responses.
+        - Ensure rate limits, retry policies, circuit breakers, and timeout settings are explicitly configured where relevant.
+        - Prefer explicit allowlists over permissive wildcards for origins, networks, or integrations.
+
+    - path: "**/*.{test,spec}.{go,py,java,kt,rb,rs,cs,ts,js}"
+      instructions: |
+        - Review backend tests for API contract coverage, edge cases, and production realism.
+        - Ensure tests validate authorization, validation failures, retry behavior, and error handling paths.
+        - Prefer integration and contract tests for critical API flows over excessive mocking.
+        - Flag brittle tests tightly coupled to implementation details instead of observable behavior.
+        - Ensure tests cover idempotency, concurrency, and partial failure scenarios where relevant.
+        - Prefer deterministic tests without timing assumptions, sleeps, or external network dependencies.
+
+    - path: "**/{openapi,swagger,proto,graphql}/**"
+      instructions: |
+        - Review API contract definitions for clarity, consistency, and consumer safety.
+        - Ensure request/response schemas are explicit, versioned appropriately, and fully documented.
+        - Flag undocumented breaking changes to required fields, enums, auth requirements, or response structures.
+        - Ensure pagination, rate limiting behavior, and error responses are documented consistently.
+        - Prefer stable naming conventions and predictable field semantics across APIs.
+        - Ensure deprecated fields/endpoints include migration guidance and sunset expectations.
+
+    - path: "**/{Dockerfile,docker-compose.yml,k8s,helm}/**"
+      instructions: |
+        - Review service infrastructure configuration for operational reliability and security.
+        - Flag containers running as root, unpinned images, or unnecessary exposed ports.
+        - Ensure liveness/readiness probes, resource limits, and graceful shutdown handling exist for production services.
+        - Flag missing observability hooks such as metrics, tracing, or structured logging support.
+        - Ensure deployments support rolling updates, rollback safety, and zero-downtime expectations where applicable.

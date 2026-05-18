@@ -1,0 +1,66 @@
+reviews:
+  path_instructions:
+    - path: "**/*.{py,scala,sql,ipynb}"
+      instructions: |
+        - Review as production data engineering code with emphasis on correctness, scalability, data quality, reliability, and maintainability.
+        - Flag transformations that can silently corrupt, truncate, duplicate, or drop data without validation.
+        - Ensure schemas, column names, and data contracts are explicit and version-safe.
+        - Flag hardcoded paths, table names, buckets, credentials, or environment-specific assumptions.
+        - Prefer idempotent pipelines and deterministic transformations.
+        - Ensure failures are observable and do not silently continue after partial processing errors.
+        - Flag unbounded in-memory operations that may fail at scale.
+        - Prefer partition-aware reads/writes and incremental processing when appropriate.
+        - Ensure timezone handling, null handling, and type coercion are explicit and consistent.
+        - Flag duplicated transformation logic that should be centralized into reusable utilities or shared pipeline components.
+
+    - path: "**/*.sql"
+      instructions: |
+        - Review SQL for correctness, scalability, maintainability, and warehouse cost efficiency.
+        - Flag SELECT * usage in production queries unless explicitly justified.
+        - Flag joins without clear join conditions or joins likely to create unintended row multiplication.
+        - Ensure filters, partitions, clustering keys, and predicates are used efficiently for large datasets.
+        - Flag queries likely to cause full table scans or excessive shuffling on large tables.
+        - Ensure aggregations handle nulls, duplicates, and edge cases explicitly.
+        - Prefer explicit column selection, stable aliases, and readable CTE-based structure for complex transformations.
+        - Flag non-deterministic ordering assumptions without ORDER BY.
+        - Ensure data deletion/update queries have safeguards and scope restrictions.
+
+    - path: "**/{airflow,dags,pipelines,workflows}/**"
+      instructions: |
+        - Review orchestration logic for reliability, retry safety, and operational visibility.
+        - Ensure retries, timeouts, SLAs, and alerting behavior are explicitly configured.
+        - Flag DAG/task dependencies that can create circular execution or hidden ordering assumptions.
+        - Ensure tasks are idempotent and safe to retry.
+        - Flag large monolithic DAGs/workflows that should be decomposed into reusable stages.
+        - Ensure backfills and reprocessing flows are considered for production pipelines.
+        - Prefer explicit failure handling over silent skips or partial success behavior.
+
+    - path: "**/{spark,pyspark,beam,flink,hadoop}/**"
+      instructions: |
+        - Review distributed data processing code for scalability and cluster efficiency.
+        - Flag collect(), toPandas(), or driver-heavy operations on potentially large datasets.
+        - Ensure joins, repartitions, and shuffles are intentional and minimized where possible.
+        - Prefer partition pruning, predicate pushdown, and efficient serialization formats.
+        - Flag unnecessary wide transformations or repeated scans of large datasets.
+        - Ensure caching/persistence is used intentionally and cleaned up appropriately.
+        - Flag skew risks, hot partitions, or exploding cardinality operations.
+        - Prefer explicit schemas over schema inference for production workloads.
+
+    - path: "**/{dbt,models,snapshots,seeds,macros}/**"
+      instructions: |
+        - Review dbt/data modeling logic for correctness, lineage clarity, and warehouse efficiency.
+        - Ensure models define clear grain and business meaning.
+        - Flag ambiguous naming, hidden business logic, or duplicated transformations across models.
+        - Ensure incremental models correctly handle updates, deletes, and late-arriving data.
+        - Flag snapshot logic that may create uncontrolled storage growth or inaccurate history tracking.
+        - Prefer reusable macros and shared tests over copy-pasted SQL patterns.
+        - Ensure lineage remains understandable for both entry-level and experienced data engineers.
+
+    - path: "**/*.{test,spec}.py"
+      instructions: |
+        - Review data engineering tests for data quality, pipeline resilience, and regression safety.
+        - Ensure tests validate schema expectations, null handling, uniqueness, referential integrity, and edge cases.
+        - Prefer deterministic fixtures and synthetic datasets over production snapshots when possible.
+        - Flag tests that only validate row counts without validating semantic correctness.
+        - Ensure failure scenarios, retries, and malformed input behavior are covered.
+        - Prefer contract and transformation validation over implementation-specific assertions.

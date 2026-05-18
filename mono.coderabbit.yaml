@@ -1,0 +1,90 @@
+reviews:
+  path_instructions:
+    - path: "**/{package.json,pnpm-workspace.yaml,yarn.lock,pnpm-lock.yaml,package-lock.json,turbo.json,nx.json,lerna.json,moon.yml,bazel*,BUILD,BUILD.bazel,WORKSPACE}"
+      instructions: |
+        - Review as monorepo dependency/build graph configuration.
+        - Flag dependency changes that can affect multiple packages without clear justification.
+        - Ensure shared dependency versions stay consistent across workspaces.
+        - Flag duplicate tooling, duplicate framework versions, or conflicting package manager usage.
+        - Ensure cache keys, task inputs, task outputs, and dependency graph settings are deterministic.
+        - Flag build/test/lint tasks that ignore affected-package boundaries or force unnecessary full-repo work.
+        - Prefer explicit package ownership, explicit build outputs, and reproducible installs.
+        - Flag dependency upgrades that may break consumers outside the changed package.
+
+    - path: "**/{packages,libs,shared,common,core}/**"
+      instructions: |
+        - Review as shared monorepo code with high blast radius.
+        - Flag breaking API, type, schema, or behavior changes unless all known consumers are updated.
+        - Ensure public exports are intentional and do not expose internal implementation details.
+        - Prefer backward-compatible additions over renames, removals, or semantic changes.
+        - Flag package-level changes that lack tests covering at least one real consumer path.
+        - Ensure shared utilities stay generic and do not import app-specific code.
+        - Flag circular dependencies between shared packages.
+        - Prefer stable contracts, clear ownership, and minimal cross-package coupling.
+
+    - path: "**/{apps,services}/**"
+      instructions: |
+        - Review as application/service-owned code inside a monorepo.
+        - Ensure app-specific logic does not leak into shared packages.
+        - Flag direct imports from another app/service unless it is through an approved shared package or published interface.
+        - Ensure changes to shared contracts are reflected in all impacted apps/services.
+        - Flag local fixes that should instead be made in shared libraries.
+        - Prefer service/app boundaries that are explicit, testable, and independently deployable.
+        - Ensure deployment, environment, and config changes are scoped only to intended apps/services.
+
+    - path: "**/{api,contracts,schemas,proto,openapi,graphql}/**"
+      instructions: |
+        - Review as cross-team API/contract surface with monorepo-wide impact.
+        - Flag breaking contract changes unless producers, consumers, generated clients, tests, and migration notes are updated.
+        - Ensure schemas are versioned or evolved backward-compatibly.
+        - Flag ambiguous optional/null fields, enum removals, field renames, or changed default semantics.
+        - Ensure generated artifacts are updated only when source contracts changed.
+        - Prefer additive changes and explicit deprecation paths.
+        - Ensure contract tests cover at least one producer and one consumer when applicable.
+
+    - path: "**/{tools,scripts,build,ci,.github/workflows}/**"
+      instructions: |
+        - Review as monorepo automation affecting developer productivity and release safety.
+        - Flag scripts that assume a single package, fixed working directory, or local-only environment.
+        - Ensure scripts work from a clean checkout and fail with actionable errors.
+        - Flag automation that bypasses affected-package detection, ownership checks, tests, or release gates.
+        - Ensure CI changes preserve caching, parallelism, determinism, and correct dependency ordering.
+        - Flag secrets, tokens, deploy credentials, or registry credentials in scripts or workflow files.
+        - Prefer reusable commands over duplicated per-package automation.
+
+    - path: "**/{tsconfig*.json,eslint.config.*,prettier.config.*,jest.config.*,vitest.config.*,pytest.ini,ruff.toml,pyproject.toml}"
+      instructions: |
+        - Review as shared tooling configuration.
+        - Flag changes that weaken type-checking, linting, formatting, test isolation, or static analysis across the repo.
+        - Ensure config changes are intentionally scoped and do not surprise unrelated packages.
+        - Prefer shared base configs with package-level overrides only when justified.
+        - Flag broad ignore patterns, disabled rules, or relaxed strictness without clear reason.
+        - Ensure test discovery does not accidentally exclude packages or include generated/build output.
+
+    - path: "**/{Dockerfile,docker-compose.yml,compose.yml,k8s,helm,terraform,infra}/**"
+      instructions: |
+        - Review as monorepo infrastructure/deployment configuration.
+        - Ensure changes affect only intended apps/services/environments.
+        - Flag shared infrastructure changes with unclear blast radius.
+        - Ensure image names, tags, ports, secrets, namespaces, and deployment targets are service-specific and not accidentally reused.
+        - Flag public exposure, overly broad IAM, plaintext secrets, privileged containers, or unpinned images.
+        - Ensure rollout, rollback, health checks, and resource limits are defined for production workloads.
+        - Prefer least privilege, private networking, and environment-specific configuration outside source code.
+
+    - path: "**/{docs,README.md,CONTRIBUTING.md,CODEOWNERS,OWNERS}"
+      instructions: |
+        - Review monorepo documentation and ownership metadata for accuracy and operational usefulness.
+        - Ensure package ownership, review ownership, build/test commands, and release instructions stay current.
+        - Flag docs that describe single-package workflows when the repo requires affected-package workflows.
+        - Ensure ownership changes match actual code boundaries.
+        - Prefer concise instructions that help new contributors choose the correct package, test target, and owner.
+        - Flag stale references to removed packages, renamed commands, or deprecated workflows.
+
+    - path: "**/*.{test,spec}.{ts,tsx,js,jsx,py,java,kt,go,rb,cs}"
+      instructions: |
+        - Review tests for monorepo impact, consumer coverage, and regression safety.
+        - Ensure shared package changes include tests for both package-local behavior and impacted consumer behavior.
+        - Flag tests that rely on repo-wide execution order, shared mutable state, or hidden workspace setup.
+        - Prefer isolated package tests plus targeted integration tests across package boundaries.
+        - Ensure snapshots and fixtures do not encode unrelated package internals.
+        - Flag missing tests for contract, schema, or shared utility changes with broad downstream usage.
