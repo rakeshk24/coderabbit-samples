@@ -71,15 +71,6 @@ reviews:
         - Ensure rollout, rollback, health checks, and resource limits are defined for production workloads.
         - Prefer least privilege, private networking, and environment-specific configuration outside source code.
 
-    - path: "**/{docs,README.md,CONTRIBUTING.md,CODEOWNERS,OWNERS}"
-      instructions: |
-        - Review monorepo documentation and ownership metadata for accuracy and operational usefulness.
-        - Ensure package ownership, review ownership, build/test commands, and release instructions stay current.
-        - Flag docs that describe single-package workflows when the repo requires affected-package workflows.
-        - Ensure ownership changes match actual code boundaries.
-        - Prefer concise instructions that help new contributors choose the correct package, test target, and owner.
-        - Flag stale references to removed packages, renamed commands, or deprecated workflows.
-
     - path: "**/*.{test,spec}.{ts,tsx,js,jsx,py,java,kt,go,rb,cs}"
       instructions: |
         - Review tests for monorepo impact, consumer coverage, and regression safety.
