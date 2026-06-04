@@ -1,16 +1,5 @@
 reviews:
   path_instructions:
-    - path: "**/{package.json,pnpm-workspace.yaml,yarn.lock,pnpm-lock.yaml,package-lock.json,turbo.json,nx.json,lerna.json,moon.yml,bazel*,BUILD,BUILD.bazel,WORKSPACE}"
-      instructions: |
-        - Review as monorepo dependency/build graph configuration.
-        - Flag dependency changes that can affect multiple packages without clear justification.
-        - Ensure shared dependency versions stay consistent across workspaces.
-        - Flag duplicate tooling, duplicate framework versions, or conflicting package manager usage.
-        - Ensure cache keys, task inputs, task outputs, and dependency graph settings are deterministic.
-        - Flag build/test/lint tasks that ignore affected-package boundaries or force unnecessary full-repo work.
-        - Prefer explicit package ownership, explicit build outputs, and reproducible installs.
-        - Flag dependency upgrades that may break consumers outside the changed package.
-
     - path: "**/{packages,libs,shared,common,core}/**"
       instructions: |
         - Review as shared monorepo code with high blast radius.
@@ -79,3 +68,20 @@ reviews:
         - Prefer isolated package tests plus targeted integration tests across package boundaries.
         - Ensure snapshots and fixtures do not encode unrelated package internals.
         - Flag missing tests for contract, schema, or shared utility changes with broad downstream usage.
+
+    - path: "**/index.{ts,tsx,js,jsx,mjs,cjs},**/*.d.ts"
+      instructions: |
+        - Review as the public API surface of a shared monorepo package.
+        - Flag any removal or rename of an exported symbol without a corresponding version bump and migration note.
+        - Ensure new exports are intentional — check that internal helpers are not accidentally exposed.
+        - Flag type-only changes (widened/narrowed types, changed generics, added/removed optionality) that silently break consumers without a visible API diff.
+        - Prefer additive exports; flag re-export barrel changes that could affect tree-shaking or circular dependency risk.
+
+    - path: "**/{events,messages,topics,queues,subscribers,handlers}/**"
+      instructions: |
+        - Review as async/event contract crossing service boundaries in the monorepo.
+        - Flag field removals, renames, or type narrowing — treat these as breaking changes requiring a versioned event type or coordinated migration.
+        - Ensure new required fields have a default or are introduced in a backward-compatible way.
+        - Flag producer changes not accompanied by updates to all known consumers and their tests.
+        - Ensure event/message type names are versioned or namespaced so schema evolution is explicit.
+        - Prefer additive field additions and explicit deprecation over in-place mutation of existing event shapes.
