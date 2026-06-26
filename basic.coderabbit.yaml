@@ -3,6 +3,7 @@ enable_free_tier: false
 early_access: false
 reviews:
   poem: false
+  profile: chill
   review_details: true
   path_instructions:
     - path: '**/*'
