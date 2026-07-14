@@ -8,7 +8,9 @@ reviews:
   path_instructions:
     - path: '**/*'
       instructions: |
-        Perform a high-signal code review focused on the most important issues only.
+        Perform a highly thorough code review.
+        The goal is to simulate a meticulous human reviewer who checks everything before production.
+        Review the code with high blast radius - trace callers/consumers of changed public signatures, schemas, and shared utilities within the repository.
         Prioritize issues that are likely to cause:
         - correctness problems
         - regressions
