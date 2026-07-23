@@ -17,3 +17,45 @@ reviews:
           Fail if logs expose secrets or personal data
           (tokens, passwords, auth headers, cookies, PII).
           Pass if logs are redacted or contain only safe fields.
+      - name: "Destructive database migrations"
+        mode: "error"
+        instructions: |
+          Fail if any migration file contains:
+          - DROP TABLE, DROP COLUMN, or TRUNCATE without a corresponding rollback step
+          - ALTER TABLE that changes a column type in a way that could lose data (e.g. VARCHAR(255) → VARCHAR(50))
+          - Adding a NOT NULL constraint without a default value or backfill
+          - Any statement that acquires a full table lock on a table likely to be large (e.g. adding an index without CONCURRENTLY in Postgres)
+          Pass if destructive operations include rollback steps, are guarded by IF EXISTS, or the PR description explains the data safety strategy.
+      - name: "API breaking changes"
+        mode: "error"
+        instructions: |
+          Fail if the diff modifies a public or internal API and:
+          - Removes or renames an existing endpoint, request field, or response field without a deprecation notice
+          - Changes the type of an existing request/response field (e.g. string → integer)
+          - Makes a previously optional field required
+          - Removes an enum value that existing callers may be sending
+          Pass if the PR description documents the breaking change and a migration path, or if the change is additive only.
+      - name: "N+1 query risk"
+        mode: "error"
+        instructions: |
+          Fail if the diff contains ORM or query patterns that likely produce N+1 queries:
+          - A loop (for, forEach, map, each) that calls an ORM finder, raw query, or repository method per iteration
+          - Lazy-loaded associations accessed inside a loop without an eager-load (includes/preload/with) at the outer query
+          - A new endpoint or service method that loads a list and then fetches related records one by one
+          Pass if queries use batch loading, eager loading, or a single JOIN to fetch related records.
+      - name: "Unbounded queries and missing pagination"
+        mode: "error"
+        instructions: |
+          Fail if any endpoint, service method, or background job:
+          - Fetches all rows from a table (e.g. Model.all, SELECT * FROM table with no LIMIT, find_all with no size cap)
+          - Returns a list response with no pagination parameters (page/cursor/limit) and no documented upper bound
+          - Passes a user-supplied limit/offset directly to a query without validating a maximum page size
+          Pass if results are paginated, bounded by a constant MAX, or the dataset is provably small (e.g. a config table with < 100 rows).
+      - name: "Swallowed exceptions"
+        mode: "error"
+        instructions: |
+          Fail if the diff contains:
+          - A catch/rescue/except block that is empty or only contains a comment
+          - A catch block that logs the error but then returns a successful response (e.g. status 200) to the caller
+          - A catch block that silently swallows the exception without re-raising, returning an error response, or recording it to an error tracker (Sentry, Datadog, etc.)
+          Pass if exceptions are re-raised, returned as error responses, or forwarded to an error tracking integration.
