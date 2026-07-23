@@ -1,0 +1,114 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit configuration for a Guidewire Insurance Platform repository
+# Covers PolicyCenter / ClaimCenter / BillingCenter customization projects
+
+reviews:
+  poem: false
+  review_details: true
+  profile: assertive
+
+  path_instructions:
+    - path: "**/*.gs"
+      instructions: |
+        Gosu source file. Review for:
+        - Null safety: Guidewire entities can return null from navigations; assert null-checks before chaining.
+        - Exception handling: do not swallow PCExceptions or EntityExistenceExceptions silently.
+        - Transaction boundaries: flag any direct commit() or Bundle usage outside of expected workflow steps.
+        - Avoid direct OOTB class modification — logic should live in enhancement files (.gsx) or subclasses.
+
+    - path: "**/*.gsx"
+      instructions: |
+        Gosu enhancement file. Verify the enhancement targets the correct type and does not shadow
+        or conflict with existing OOTB enhancements. Flag any stateful fields added via enhancement
+        (not supported — enhancements cannot hold state).
+
+    - path: "**/*.pcf"
+      instructions: |
+        Page Component Framework UI file. Review for:
+        - No business logic embedded in PCF — delegate to Gosu helpers or managers.
+        - Availability expressions that reference entity fields should guard against null navigation.
+        - Hardcoded strings must use display keys (refer to the i18n properties files), not string literals.
+
+    - path: "**/*.eti"
+      instructions: |
+        Entity type info file (data model definition). Flag any:
+        - Column additions without a corresponding migration script.
+        - Removal or type change of existing columns — high risk of breaking existing data and queries.
+        - Missing <column> nullability annotations.
+
+    - path: "**/*.etx"
+      instructions: |
+        Entity extension file. Confirm extensions follow the GW extension pattern:
+        entity name must match an existing OOTB entity. Flag direct modification of OOTB .eti files
+        — all customizations must use .etx to remain upgrade-safe.
+
+    - path: "**/config/**"
+      instructions: |
+        Configuration file (rules, workflows, validation sets). Review for:
+        - Validation rule changes that could silently drop required-field enforcement.
+        - Workflow step changes that alter approval routing — flag for UAT sign-off callout.
+        - Any rule that references a typekey value not present in the current typelist.
+
+  pre_merge_checks:
+    custom_checks:
+      - name: "PII and sensitive insurance data in logs"
+        mode: "error"
+        instructions: |
+          Fail if any log statement (Logger.info, Logger.debug, Logger.error, print, system.out)
+          outputs fields that contain PII or regulated insurance data, including:
+          - SSN, TaxID, or government ID numbers
+          - Date of birth, age, or gender
+          - Driver's license or VIN
+          - Health diagnosis codes, injury descriptions, or medical record references
+          - Financial account numbers, payment card data, or bank routing numbers
+          - Full name combined with address, phone, or email (combined PII)
+          Pass only if the logged value is explicitly masked, tokenized, or is a non-PII identifier
+          such as a PolicyNumber or ClaimNumber with no attached personal fields.
+
+      - name: "Security checks"
+        mode: "error"
+        instructions: |
+          Fail if any of the following are detected:
+          - Hardcoded credentials, API keys, or tokens in source or config files
+          - User-supplied input passed directly to a query, eval, or shell call without sanitization
+          - Authentication or authorization checks bypassed on endpoints or workflow steps
+          - REST integration credentials stored in plain text rather than the GW credential store
+          - TLS verification disabled on outbound HTTP integrations
+
+      - name: "OOTB file modification"
+        mode: "error"
+        instructions: |
+          Fail if the diff modifies any file under a path that indicates an out-of-the-box Guidewire
+          file (e.g. paths containing /ootb/, /base/, or filenames not prefixed with the project's
+          customization namespace). All customizations must use .etx (data model), .gsx (Gosu
+          enhancements), or PCF extension patterns to remain upgrade-safe.
+          Pass if only extension or configuration files are modified.
+
+      - name: "Destructive data model changes"
+        mode: "error"
+        instructions: |
+          Fail if the diff contains:
+          - Removal of an existing column or entity from a .eti or .etx file without a migration script
+          - A column type change that could truncate or lose existing data
+          - Removal of a typekey value from a typelist that may be referenced by existing records
+          Pass if the PR description explains the data migration strategy and rollback plan.
+
+knowledge_base:
+  code_guidelines:
+    filePatterns:
+      - "**/CODING_GUIDELINES.md"
+      - "**/docs/development-standards.md"
+
+  linked_repositories:
+    # ClaimCenter consumes policy data from PolicyCenter via the PolicyPeriod integration.
+    # Flag any changes to shared policy entity fields or integration API responses that
+    # ClaimCenter's policy retrieval plugin depends on.
+    - repository: "myorg/claimcenter"
+      instructions: >
+        Flag changes to PolicyPeriod, Policy, or insured-party entity fields that ClaimCenter
+        reads via the policy retrieval integration. claimcenter/modules/policy/PolicyRetrievalPlugin.gs
+        maps fields: policyNumber, effectiveDate, expirationDate, insuredName, coverages[].type,
+        coverages[].limit. Renames or removals will silently break new claim creation.
+        Also flag changes to the PolicyCenter REST API contract under /pc/rest/policy — ClaimCenter
+        calls these endpoints during fnol (first notice of loss) and the integration does not
+        have schema validation at runtime.
