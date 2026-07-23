@@ -1,0 +1,66 @@
+# Multi-repo analysis examples for a backend engineer persona
+# Docs: https://docs.coderabbit.ai/knowledge-base/multi-repo-analysis
+
+# ---------------------------------------------------------------------------
+# 1. REST API contract → mobile client
+#    Flag endpoint/field changes that break a mobile app consuming the API.
+# ---------------------------------------------------------------------------
+# knowledge_base:
+#   linked_repositories:
+#     - repository: "myorg/mobile-app"
+#       instructions: >
+#         Flag any endpoint path changes, HTTP method changes, or request/response field
+#         renames/removals. mobile-app/services/api.ts hardcodes paths: GET /users,
+#         POST /users, GET /users/{id}, PUT /users/{id}, DELETE /users/{id}.
+#         Also flag status code changes — the mobile client branches on 200, 201, 400, 401, 404.
+
+# ---------------------------------------------------------------------------
+# 2. Shared internal library → consumer services
+#    Flag public API breaks in a shared SDK imported by multiple backend services.
+# ---------------------------------------------------------------------------
+# knowledge_base:
+#   linked_repositories:
+#     - repository: "myorg/service-a"
+#       instructions: >
+#         This service imports the shared lib. Flag any public function signature changes,
+#         removed exports, or renamed modules that service-a/lib/common.py imports.
+#     - repository: "myorg/service-b"
+#       instructions: >
+#         Flag the same — service-b/src/utils/index.ts re-exports everything from the shared lib.
+
+# ---------------------------------------------------------------------------
+# 3. Event/message schema → async consumers
+#    Flag payload changes that silently break Kafka/SQS downstream workers.
+# ---------------------------------------------------------------------------
+# knowledge_base:
+#   linked_repositories:
+#     - repository: "myorg/notification-worker"
+#       instructions: >
+#         Flag changes to event payloads this worker consumes: order.created, order.updated,
+#         order.cancelled. notification-worker/handlers/order_handler.py destructures
+#         fields: user_id, order_id, amount, status. Renames or removals will silently break processing.
+
+# ---------------------------------------------------------------------------
+# 4. Database schema → services sharing the same DB
+#    Flag migration changes (column renames/removals) that break raw SQL in sibling services.
+# ---------------------------------------------------------------------------
+# knowledge_base:
+#   linked_repositories:
+#     - repository: "myorg/reporting-service"
+#       instructions: >
+#         Flag any table renames, column renames/removals, or type changes in migrations.
+#         reporting-service/queries/ runs raw SQL against: users (id, email, created_at),
+#         orders (id, user_id, total, status, created_at), order_items (order_id, sku, qty, price).
+
+# ---------------------------------------------------------------------------
+# 5. Auth/permissions model → API gateway or policy service
+#    Flag role/scope/claim changes that silently break gateway enforcement.
+# ---------------------------------------------------------------------------
+# knowledge_base:
+#   linked_repositories:
+#     - repository: "myorg/api-gateway"
+#       instructions: >
+#         Flag changes to role names, permission scopes, or JWT claim keys.
+#         api-gateway/policies/ enforces roles: admin, editor, viewer — any rename here
+#         will cause silent authorization failures. Also flag changes to the token structure:
+#         gateway expects claims sub, roles[], org_id.
