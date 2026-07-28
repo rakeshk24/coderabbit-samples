@@ -90,7 +90,7 @@ reviews:
 
   pre_merge_checks:
     custom_checks:
-      - name: "PII and sensitive insurance data in logs"
+      - name: "PII and sensitive data in logs"
         mode: "warning"
         instructions: |
           Fail if any log statement (Logger.info, Logger.debug, Logger.error, print, system.out)
@@ -102,7 +102,7 @@ reviews:
           - Financial account numbers, payment card data, or bank routing numbers
           - Full name combined with address, phone, or email (combined PII)
           Pass only if the logged value is explicitly masked, tokenized, or is a non-PII identifier
-          such as a PolicyNumber or ClaimNumber with no attached personal fields.
+          with no attached personal fields.
 
       - name: "Security checks"
         mode: "warning"
@@ -121,15 +121,12 @@ knowledge_base:
       - "**/docs/development-standards.md"
   automatic_repository_linking: true #default: false
   linked_repositories:
-    - repository: "myorg/claimcenter"
+    - repository: "org/repo-name"
       instructions: >
-        Flag changes to PolicyPeriod, Policy, or insured-party entity fields that ClaimCenter
-        reads via the policy retrieval integration. claimcenter/modules/policy/PolicyRetrievalPlugin.gs
-        maps fields: policyNumber, effectiveDate, expirationDate, insuredName, coverages[].type,
-        coverages[].limit. Renames or removals will silently break new claim creation.
-        Also flag changes to the PolicyCenter REST API contract under /pc/rest/policy — ClaimCenter
-        calls these endpoints during fnol (first notice of loss) and the integration does not
-        have schema validation at runtime.
+        Flag any field renames or removals — repo-name/api_client.py references these field names directly (status, priority, title, id).
+        Also flag any endpoint path changes that would break the frontend api_client.
+        Check that endpoint paths match what reop-name/api_client.py expects:
+        GET /tasks, POST /tasks, PATCH /tasks/{id}/complete, PATCH /tasks/{id}/start, DELETE /tasks/{id}
   jira:
     usage: "enabled"
     project_keys:
