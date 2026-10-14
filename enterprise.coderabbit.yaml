@@ -13,7 +13,7 @@ reviews:
   auto_apply_labels: true #default: false
   labeling_instructions:
     - label: database
-      instructions: Apply when the PR includes schema changes or inline migrations such as ALTER TABLE statements.  
+      instructions: Apply when the PR includes schema changes or inline migrations such as ALTER TABLE statements.
   suggested_reviewers: true #default: true
   auto_assign_reviewers: false #default: false
   suggested_reviewers_instructions:
@@ -22,7 +22,7 @@ reviews:
           type: user
         - handle: abc
           type: group
-      instructions: "Assign when a PR modifies or adds sensitive fields (password, token, api_key, secret) to registry-serialized models, removes error handling around OpenKey/QueryValueEx/DeleteKey, or changes how registry handles are opened or closed"
+      instructions: "Assign when a PR adds or modifies sensitive fields (password, token, api_key, secret) in serialized models, removes error handling around credential or secret-store access, or changes how security-sensitive resources are opened or closed"
   path_filters:
     - '!**/*.bin'
     - '!**/*.zip'
@@ -41,8 +41,8 @@ reviews:
         1. Bugs & Correctness
            - logical errors, incorrect assumptions, off-by-one errors
            - race conditions and failure handling
-           - null/uninitialized object access — entity navigations across relationships can return null
-             for draft, cancelled, or partially-created records regardless of language
+           - null/uninitialized object access — navigations across entity relationships can return null
+             for draft, cancelled, or partially-created records
            - type/enum comparisons using display labels or locale-sensitive strings instead of codes or constants —
              these silently fail in non-English or multi-locale environments
            - date arithmetic that conflates date-only and datetime types — produces incorrect offsets at timezone boundaries
@@ -55,10 +55,10 @@ reviews:
              and call sites — callers in other modules or languages will not always surface this at compile time
            - if an entity field or data model element is added, renamed, or removed, flag every layer that
              references it: service classes, query builders, UI components, serialization mappings, and tests
-           - if a typekey, enum, or lookup value is added or removed, flag all switch/match/if-else chains
+           - if an enum, constant, or lookup value is added or removed, flag all switch/match/if-else chains
              that enumerate it — missing cases produce silent no-ops, not errors
-           - if a validation rule set or workflow step changes, flag all entry points that trigger it:
-             UI submission, REST handlers, and batch jobs may each invoke it independently
+           - if a validation rule or workflow step changes, flag all entry points that trigger it:
+             UI submission, API handlers, and batch jobs may each invoke it independently
 
         3. Code Quality
            - duplication, dead code, unnecessary complexity, poor naming, hidden coupling
@@ -69,11 +69,11 @@ reviews:
 
         5. Testing — missing coverage
            - any new public method or changed business logic without a corresponding test
-           - changes to a plugin or integration (messaging, batch, external API) with no updated test
+           - changes to an integration (messaging, batch, external API) with no updated test
              covering the changed code path
            - new validation rules or workflow steps with no test that exercises the failing condition —
              a test covering only the happy path is insufficient
-           - changes to UI expressions or conditional rendering with no scenario or integration test
+           - changes to UI logic or conditional rendering with no component or integration test
            - weak assertions, untested edge cases, missing regression tests
 
         6. Security
@@ -82,8 +82,8 @@ reviews:
 
         7. Performance & Edge Cases
            - inefficiencies, redundant work, unnecessary allocations
-           - queries with no result-size limit on tables that grow unboundedly (e.g. Claim, Activity,
-             PolicyPeriod) — these pass in dev with small datasets and fail in production
+           - queries with no result-size limit on tables that grow unboundedly (e.g. orders, events,
+             audit logs) — these pass in dev with small datasets and fail in production
            - logic that assumes a specific entity or workflow state without asserting it — the same
              code path is often reachable from multiple states and will behave incorrectly in others
            - missing handling for empty collections, zero values, boundary dates, or concurrent modification
@@ -93,12 +93,12 @@ reviews:
       - name: "PII and sensitive data in logs"
         mode: "warning"
         instructions: |
-          Fail if any log statement (Logger.info, Logger.debug, Logger.error, print, system.out)
-          outputs fields that contain PII or regulated insurance data, including:
+          Fail if any log statement (logger calls, print statements, console output)
+          outputs fields that contain PII or other regulated data, including:
           - SSN, TaxID, or government ID numbers
           - Date of birth, age, or gender
-          - Driver's license or VIN
-          - Health diagnosis codes, injury descriptions, or medical record references
+          - Driver's license, passport, or vehicle identification numbers
+          - Health or medical information
           - Financial account numbers, payment card data, or bank routing numbers
           - Full name combined with address, phone, or email (combined PII)
           Pass only if the logged value is explicitly masked, tokenized, or is a non-PII identifier
@@ -111,7 +111,7 @@ reviews:
           - Hardcoded credentials, API keys, or tokens in source or config files
           - User-supplied input passed directly to a query, eval, or shell call without sanitization
           - Authentication or authorization checks bypassed on endpoints or workflow steps
-          - REST integration credentials stored in plain text rather than the GW credential store
+          - Integration credentials stored in plain text rather than a secrets manager or credential store
           - TLS verification disabled on outbound HTTP integrations
 
 knowledge_base:
@@ -123,10 +123,9 @@ knowledge_base:
   linked_repositories:
     - repository: "org/repo-name"
       instructions: >
-        Flag any field renames or removals — repo-name/api_client.py references these field names directly (status, priority, title, id).
-        Also flag any endpoint path changes that would break the frontend api_client.
-        Check that endpoint paths match what reop-name/api_client.py expects:
-        GET /tasks, POST /tasks, PATCH /tasks/{id}/complete, PATCH /tasks/{id}/start, DELETE /tasks/{id}
+        Flag any field renames or removals in API response models — repo-name consumes these fields directly.
+        Also flag any endpoint path, method, or request/response schema changes that would break
+        the API client in repo-name.
   jira:
     usage: "enabled"
     project_keys:
