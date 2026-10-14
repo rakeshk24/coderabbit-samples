@@ -34,7 +34,7 @@ reviews:
   path_instructions:
     - path: "**/*"
       instructions: |
-        Perform an exhaustive and highly thorough code review.
+        Perform a highly thorough code review.
         Simulate a meticulous human reviewer who checks everything before production.
         Prioritize completeness over brevity. If uncertain about a potential issue, include it as a possible concern.
 
