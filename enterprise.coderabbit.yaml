@@ -119,7 +119,7 @@ knowledge_base:
     filePatterns:
       - "**/CODING_GUIDELINES.md"
       - "**/docs/development-standards.md"
-  automatic_repository_linking: true #default: false
+  automatic_linking_mode: true #default: false
   linked_repositories:
     - repository: "org/repo-name"
       instructions: >
