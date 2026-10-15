@@ -1,21 +1,36 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 #
 # ============================================================================
-#  CodeRabbit enterprise config, grouped by what you're trying to do
+#  HOW TO ADAPT THIS FILE
+#  Tell your coding agent: "Adapt this file to our repo using the instructions
+#  at the top." Or follow them yourself; it takes about 10 minutes.
 # ============================================================================
-#  YAML nesting decides where each category can live, so most of them sit
-#  under `reviews:`, while Context and Chat are top-level keys.
+#  Save the result as `.coderabbit.yaml` in the repo root (CodeRabbit ignores
+#  any other name). Everything not listed below works out of the box; tune it
+#  later once the team has seen a few reviews.
 #
-#   1. Getting started ............ global settings, inheritance
-#   2. When & what gets reviewed .. reviews.auto_review, reviews.path_filters
-#   3. Review style & PR output ... reviews.profile, poem, status, details
-#   4. Review focus ............... reviews.path_instructions
-#   5. Merge gates & approvals .... reviews.pre_merge_checks, approval flags
-#   6. PR organization ............ reviews labels & reviewers
-#   7. Automated fixes & actions .. reviews.finishing_touches, post_merge_actions
-#   8. Context & memory ........... knowledge_base
-#   9. Chat & collaboration ....... chat
+#  Inspect the repo first (languages, folder layout, build output, test and
+#  migration folders, existing docs), then change only these four things:
 #
+#   a. profile: chill
+#        Keep it. Switch to `assertive` only if the team asks for more feedback.
+#   b. path_filters
+#        Exclude only what exists in this repo: build output, dependency folders,
+#        generated code, binaries and media. Never exclude source or test code.
+#   c. path_instructions
+#        Keep the `**/*` checklist; remove lines that don't fit this stack.
+#        Keep the tests and migrations entries only if those folders exist, with
+#        corrected globs. Add one 3–6 line entry per major area (api/, web/, ...).
+#   d. code_guidelines.filePatterns
+#        Point only to existing standards or guidelines docs that are relevant
+#        to code review (e.g. docs/CODING_GUIDELINES.md). Remove the patterns if
+#        none exist. Don't invent files.
+#
+#  Then clean up:
+#   - Any `<placeholder>` or `# ADAPT:` value you can't fill from the repo:
+#     delete that setting. Never leave placeholders in.
+#   - Leave the security and PII pre-merge checks unchanged.
+#   - Delete this instruction block.
 # ============================================================================
 
 
@@ -37,7 +52,7 @@ reviews:
   auto_review:
     ignore_title_keywords: ["WIP", "DO NOT REVIEW"] # default: []
     ignore_usernames: ["dependabot[bot]", "renovate[bot]"] # default: []
-    base_branches: ["develop", "release/.*"] # default: [] — default branch is always reviewed
+    base_branches: ["develop", "release/.*"] # ADAPT: this repo's real non-default branches (default branch is always reviewed). default: []
 
   path_filters: # default: [] — `!` excludes a path from review
     # build output & dependencies
@@ -153,7 +168,7 @@ reviews:
       - name: "PII and sensitive data in logs"
         mode: "warning" # default: warning — move to "error" + request_changes_workflow once tuned
         instructions: |
-          Fail if any log statement (Logger.info, Logger.debug, Logger.error, print, System.out)
+          Fail if any log statement, logger call, or print/console output (in any language)
           outputs fields that contain PII or sensitive data, including:
           - Government ID or tax ID numbers
           - Date of birth
@@ -193,10 +208,10 @@ reviews:
   auto_assign_reviewers: false # default: false
   suggested_reviewers_instructions: # default: []
     - reviewers:
-        - handle: xyz
+        - handle: "<github-username>" # ADAPT
           type: user
-        - handle: abc
-          type: group # team handles are GitHub-only
+        - handle: "<team-handle>" # ADAPT: team handles are GitHub-only
+          type: group
       instructions: "Assign when a PR modifies or adds sensitive fields (password, token, api_key, secret) to serialized models, removes error handling around credential or key access, or changes how secrets/connections are opened or closed."
 
   # --------------------------------------------------------------------------
@@ -216,7 +231,7 @@ reviews:
       enabled: true # default: true
     resolve_merge_conflict:
       enabled: true # default: true
-    custom: # default: [] — Custom Recipes, trigger with `@coderabbitai run <name>`
+    custom: # default: [] — Custom Recipes, trigger with `@coderabbitai run` + the recipe name
       - name: "harden error handling"
         instructions: |
           For changed code paths, replace swallowed exceptions and bare catch blocks with explicit handling:
@@ -247,18 +262,16 @@ knowledge_base:
   # Awareness of other repositories
   automatic_linking_mode: auto # default: disabled
   linked_repositories: # default: []
-    - repository: "org/repo-name"
+    - repository: "<org>/<consumer-repo>" # ADAPT: a repo that depends on this one's APIs or models
       instructions: >
-        Flag any field renames or removals — repo-name/api_client.py references these field names directly (status, priority, title, id).
-        Also flag any endpoint path changes that would break the frontend api_client.
-        Check that endpoint paths match what repo-name/api_client.py expects:
-        GET /tasks, POST /tasks, PATCH /tasks/{id}/complete, PATCH /tasks/{id}/start, DELETE /tasks/{id}
+        Flag any renamed or removed API response fields, endpoint paths, or request/response
+        schemas that <consumer-repo> calls directly. Name the affected file in <consumer-repo> when possible.
 
   # Tickets & external context
   jira:
     usage: "enabled" # default: auto
-    project_keys: # default: []
-      - "XYZ"
+    project_keys: # ADAPT. default: []
+      - "<JIRA-KEY>"
   mcp:
     usage: "enabled" # default: auto
 
