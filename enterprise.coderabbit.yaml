@@ -10,7 +10,7 @@
 #  later once the team has seen a few reviews.
 #
 #  Inspect the repo first (languages, folder layout, build output, test and
-#  migration folders, existing docs), then change only these four things:
+#  migration folders, existing docs), then review only these four settings:
 #
 #   a. profile: chill
 #        Keep it. Switch to `assertive` only if the team asks for more feedback.
