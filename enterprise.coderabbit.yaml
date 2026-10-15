@@ -1,19 +1,40 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# Validate before committing: `coderabbit config validate` (CLI) — checks against the current schema.
 
 enable_free_tier: false
 early_access: false
+inheritance: true # NEW: merge with org/central config instead of fully overriding it
 
 reviews:
+  profile: chill # keep chill for trials; path instructions are written to match
   poem: false
+  in_progress_fortune: false # quieter PRs for enterprise teams
   review_details: true #default: false
-  profile: chill
-  request_changes_workflow: false #default: false
   review_status: true #default: true
+  fail_commit_status: true #default: false — surface review errors instead of failing silently
+
+  # Approval behaviour
+  request_changes_workflow: false #default: false — set true to let `error` pre-merge checks block merges
+  allow_author_approval: false # NEW: authors can't `@coderabbitai approve/resolve` their own PRs
+
+  # Labels
   suggested_labels: true
   auto_apply_labels: true #default: false
   labeling_instructions:
     - label: database
       instructions: Apply when the PR includes schema changes or inline migrations such as ALTER TABLE statements.
+    - label: security-sensitive
+      instructions: Apply when the PR touches authentication, authorization, secrets handling, encryption, or PII fields.
+    - label: breaking-change
+      instructions: Apply when the PR removes or renames a public API, endpoint, event, or shared data-model field.
+    - label: "risk: high"
+      instructions: Apply when the change touches shared services, auth, payments, data migrations, or more than one deployable service.
+    - label: "risk: low"
+      instructions: Apply when the change is limited to docs, tests, comments, or isolated non-production code.
+  mutually_exclusive_groups: # NEW: prevents conflicting labels on the same PR
+    risk: ["risk: high", "risk: low"]
+
+  # Reviewers
   suggested_reviewers: true #default: true
   auto_assign_reviewers: false #default: false
   suggested_reviewers_instructions:
@@ -21,28 +42,57 @@ reviews:
         - handle: xyz
           type: user
         - handle: abc
-          type: group
-      instructions: "Assign when a PR adds or modifies sensitive fields (password, token, api_key, secret) in serialized models, removes error handling around credential or secret-store access, or changes how security-sensitive resources are opened or closed"
+          type: group # team handles are GitHub-only
+      instructions: "Assign when a PR modifies or adds sensitive fields (password, token, api_key, secret) to serialized models, removes error handling around credential or key access, or changes how secrets/connections are opened or closed."
+
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 5 # set 0 to never pause on busy PRs
+    ignore_title_keywords: ["WIP", "DO NOT REVIEW"]
+    ignore_usernames: ["dependabot[bot]", "renovate[bot]"]
+    base_branches: ["develop", "release/.*"] # default branch is always reviewed
+
   path_filters:
+    # binaries / archives / media
     - '!**/*.bin'
     - '!**/*.zip'
     - '!**/*.7z'
     - '!**/*.jar'
     - '!**/*.tar'
+    - '!**/*.gz'
     - '!**/*.mp3'
+    - '!**/*.mp4'
     - '!**/*.jpeg'
+    - '!**/*.jpg'
+    - '!**/*.png'
+    - '!**/*.pdf'
+    # generated / vendored / build output
+    - '!**/dist/**'
+    - '!**/build/**'
+    - '!**/node_modules/**'
+    - '!**/vendor/**'
+    - '!**/*.min.js'
+    - '!**/*.map'
+    - '!**/*.generated.*'
+    # lockfiles (dependency CVEs are still covered by OSV Scanner on manifest changes)
+    - '!**/package-lock.json'
+    - '!**/yarn.lock'
+    - '!**/pnpm-lock.yaml'
+
   path_instructions:
     - path: "**/*"
       instructions: |
-        Perform a highly thorough code review.
-        Simulate a meticulous human reviewer who checks everything before production.
-        Prioritize completeness over brevity. If uncertain about a potential issue, include it as a possible concern.
+        Review like a senior engineer preparing this change for production.
+        Focus on issues with real impact on correctness, security, reliability, or maintainability.
+        Skip purely stylistic nitpicks, and only raise an uncertain concern when the potential impact is significant.
 
         1. Bugs & Correctness
            - logical errors, incorrect assumptions, off-by-one errors
            - race conditions and failure handling
-           - null/uninitialized object access — navigations across entity relationships can return null
-             for draft, cancelled, or partially-created records
+           - null/uninitialized object access — entity navigations across relationships can return null
+             for draft, cancelled, or partially-created records regardless of language
            - type/enum comparisons using display labels or locale-sensitive strings instead of codes or constants —
              these silently fail in non-English or multi-locale environments
            - date arithmetic that conflates date-only and datetime types — produces incorrect offsets at timezone boundaries
@@ -55,10 +105,10 @@ reviews:
              and call sites — callers in other modules or languages will not always surface this at compile time
            - if an entity field or data model element is added, renamed, or removed, flag every layer that
              references it: service classes, query builders, UI components, serialization mappings, and tests
-           - if an enum, constant, or lookup value is added or removed, flag all switch/match/if-else chains
+           - if an enum or lookup value is added or removed, flag all switch/match/if-else chains
              that enumerate it — missing cases produce silent no-ops, not errors
-           - if a validation rule or workflow step changes, flag all entry points that trigger it:
-             UI submission, API handlers, and batch jobs may each invoke it independently
+           - if a validation rule set or workflow step changes, flag all entry points that trigger it:
+             UI submission, REST handlers, and batch jobs may each invoke it independently
 
         3. Code Quality
            - duplication, dead code, unnecessary complexity, poor naming, hidden coupling
@@ -69,11 +119,11 @@ reviews:
 
         5. Testing — missing coverage
            - any new public method or changed business logic without a corresponding test
-           - changes to an integration (messaging, batch, external API) with no updated test
+           - changes to a plugin or integration (messaging, batch, external API) with no updated test
              covering the changed code path
            - new validation rules or workflow steps with no test that exercises the failing condition —
              a test covering only the happy path is insufficient
-           - changes to UI logic or conditional rendering with no component or integration test
+           - changes to UI expressions or conditional rendering with no scenario or integration test
            - weak assertions, untested edge cases, missing regression tests
 
         6. Security
@@ -82,24 +132,65 @@ reviews:
 
         7. Performance & Edge Cases
            - inefficiencies, redundant work, unnecessary allocations
-           - queries with no result-size limit on tables that grow unboundedly (e.g. orders, events,
-             audit logs) — these pass in dev with small datasets and fail in production
+           - queries with no result-size limit on tables that grow unboundedly — these pass in dev
+             with small datasets and fail in production
            - logic that assumes a specific entity or workflow state without asserting it — the same
              code path is often reachable from multiple states and will behave incorrectly in others
            - missing handling for empty collections, zero values, boundary dates, or concurrent modification
+    - path: "**/{test,tests,__tests__,spec}/**"
+      instructions: |
+        Focus on test quality, not production-code style: assertions that actually verify behavior,
+        deterministic setup/teardown, no sleeps or network calls without mocks, and coverage of failure paths.
+    - path: "**/{migrations,db/migrate}/**"
+      instructions: |
+        Treat as production-critical. Flag non-reversible migrations, locking operations on large tables,
+        missing indexes for new foreign keys, and data backfills that are not batched.
+
+  finishing_touches:
+    docstrings:
+      enabled: true
+    unit_tests:
+      enabled: true
+    autofix: # "Fix comments" in the UI
+      enabled: true
+    simplify: # NEW, off by default
+      enabled: true
+    fix_ci: # NEW: GitHub + Azure DevOps, Team plan+
+      enabled: true
+    resolve_merge_conflict: # NEW
+      enabled: true
+    custom: # NEW: Custom Recipes — trigger with `@coderabbitai run <name>`
+      - name: "add structured logging"
+        instructions: |
+          For every new or changed function in this PR that performs I/O or calls an external service,
+          add structured log statements at entry, success, and failure using the project's existing logger.
+          Never log secrets, tokens, or PII; log identifiers only.
+      - name: "harden error handling"
+        instructions: |
+          For changed code paths, replace swallowed exceptions and bare catch blocks with explicit handling:
+          log with context, rethrow or return a typed error, and keep the existing public behavior unchanged.
 
   pre_merge_checks:
+    override_requested_reviewers_only: true # NEW: PR author can't ignore failing checks
+    title:
+      mode: warning
+      requirements: "Start with a ticket key (e.g. XYZ-123) followed by a short imperative summary under 72 characters."
+    description:
+      mode: warning
+    issue_assessment:
+      mode: warning
+    docstrings:
+      mode: "off" # enable with a threshold only if the team already enforces docstrings
     custom_checks:
       - name: "PII and sensitive data in logs"
-        mode: "warning"
+        mode: "warning" # move to "error" + request_changes_workflow once tuned
         instructions: |
-          Fail if any log statement (logger calls, print statements, console output)
-          outputs fields that contain PII or other regulated data, including:
-          - SSN, TaxID, or government ID numbers
-          - Date of birth, age, or gender
-          - Driver's license, passport, or vehicle identification numbers
-          - Health or medical information
+          Fail if any log statement (Logger.info, Logger.debug, Logger.error, print, System.out)
+          outputs fields that contain PII or sensitive data, including:
+          - Government ID or tax ID numbers
+          - Date of birth
           - Financial account numbers, payment card data, or bank routing numbers
+          - Passwords, session tokens, or authentication secrets
           - Full name combined with address, phone, or email (combined PII)
           Pass only if the logged value is explicitly masked, tokenized, or is a non-PII identifier
           with no attached personal fields.
@@ -111,28 +202,60 @@ reviews:
           - Hardcoded credentials, API keys, or tokens in source or config files
           - User-supplied input passed directly to a query, eval, or shell call without sanitization
           - Authentication or authorization checks bypassed on endpoints or workflow steps
-          - Integration credentials stored in plain text rather than a secrets manager or credential store
+          - Integration credentials stored in plain text rather than the approved secrets store
           - TLS verification disabled on outbound HTTP integrations
 
+  post_merge_actions: # NEW (max 5)
+    - name: "Release notes entry"
+      prompt: |
+        Summarize the merged change as a single release-notes bullet aimed at end users.
+        Include the linked ticket key if present. Skip if the PR only changes tests, CI, or docs.
+
+  tools:
+    presidio: # NEW: PII detection in changed files — complements the PII pre-merge check
+      enabled: true
+    trufflehog:
+      enabled: true
+    gitleaks:
+      enabled: true
+    osvScanner:
+      enabled: true
+
+chat:
+  auto_reply: true
+  allow_non_org_members: false # restrict chat to org members
+  integrations:
+    jira: # FIX: was nested under knowledge_base.chat, where it was silently ignored
+      usage: "enabled"
+      issue_template: | # NEW
+        ## Summary
+        ## Steps to Reproduce / Context
+        ## Acceptance Criteria
+
 knowledge_base:
+  learnings:
+    scope: global # org-wide learnings
+    approval_delay: 0 # NEW: set 1–30 to let admins approve learnings before they apply
   code_guidelines:
+    enabled: true
     filePatterns:
       - "**/CODING_GUIDELINES.md"
       - "**/docs/development-standards.md"
-  automatic_linking_mode: true #default: false
+      # NEW: pull standards from a central repo, optionally scoped to the files they govern
+      # - "engineering-standards:backend/java.md"
+      # - files: "engineering-standards:frontend/react.md"
+      #   applyTo: "**/*.tsx,**/*.jsx"
+  automatic_linking_mode: auto # FIX: replaces deprecated automatic_repository_linking (no effect)
   linked_repositories:
     - repository: "org/repo-name"
       instructions: >
-        Flag any field renames or removals in API response models — repo-name consumes these fields directly.
-        Also flag any endpoint path, method, or request/response schema changes that would break
-        the API client in repo-name.
+        Flag any field renames or removals — repo-name/api_client.py references these field names directly (status, priority, title, id).
+        Also flag any endpoint path changes that would break the frontend api_client.
+        Check that endpoint paths match what repo-name/api_client.py expects:
+        GET /tasks, POST /tasks, PATCH /tasks/{id}/complete, PATCH /tasks/{id}/start, DELETE /tasks/{id}
   jira:
     usage: "enabled"
     project_keys:
       - "XYZ"
-  chat:
-    integrations:
-      jira:
-        usage: "enabled"
   mcp:
     usage: "enabled"
