@@ -1,87 +1,72 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
-# Validate before committing: `coderabbit config validate` (CLI) — checks against the current schema.
+#
+# ============================================================================
+#  CodeRabbit enterprise config, grouped by what you're trying to do
+# ============================================================================
+#  YAML nesting decides where each category can live, so most of them sit
+#  under `reviews:`, while Context and Chat are top-level keys.
+#
+#   1. Getting started ............ global settings, inheritance
+#   2. When & what gets reviewed .. reviews.auto_review, reviews.path_filters
+#   3. Review style & PR output ... reviews.profile, poem, status, details
+#   4. Review focus ............... reviews.path_instructions
+#   5. Merge gates & approvals .... reviews.pre_merge_checks, approval flags
+#   6. PR organization ............ reviews labels & reviewers
+#   7. Automated fixes & actions .. reviews.finishing_touches, post_merge_actions
+#   8. Context & memory ........... knowledge_base
+#   9. Chat & collaboration ....... chat
+#
+# ============================================================================
 
-enable_free_tier: false
-early_access: false
-inheritance: true # NEW: merge with org/central config instead of fully overriding it
+
+# ----------------------------------------------------------------------------
+# 1. GETTING STARTED
+#    "Is this turned on, and does it inherit from my org?"
+# ----------------------------------------------------------------------------
+enable_free_tier: false # default: true
+early_access: false # default: false
+inheritance: true # default: false — merge with org/central config instead of fully overriding it
+
 
 reviews:
-  profile: chill # keep chill for trials; path instructions are written to match
-  poem: false
-  in_progress_fortune: false # quieter PRs for enterprise teams
-  review_details: true #default: false
-  review_status: true #default: true
-  fail_commit_status: true #default: false — surface review errors instead of failing silently
 
-  # Approval behaviour
-  request_changes_workflow: false #default: false — set true to let `error` pre-merge checks block merges
-  allow_author_approval: false # NEW: authors can't `@coderabbitai approve/resolve` their own PRs
-
-  # Labels
-  suggested_labels: true
-  auto_apply_labels: true #default: false
-  labeling_instructions:
-    - label: database
-      instructions: Apply when the PR includes schema changes or inline migrations such as ALTER TABLE statements.
-    - label: security-sensitive
-      instructions: Apply when the PR touches authentication, authorization, secrets handling, encryption, or PII fields.
-    - label: breaking-change
-      instructions: Apply when the PR removes or renames a public API, endpoint, event, or shared data-model field.
-    - label: "risk: high"
-      instructions: Apply when the change touches shared services, auth, payments, data migrations, or more than one deployable service.
-    - label: "risk: low"
-      instructions: Apply when the change is limited to docs, tests, comments, or isolated non-production code.
-  mutually_exclusive_groups: # NEW: prevents conflicting labels on the same PR
-    risk: ["risk: high", "risk: low"]
-
-  # Reviewers
-  suggested_reviewers: true #default: true
-  auto_assign_reviewers: false #default: false
-  suggested_reviewers_instructions:
-    - reviewers:
-        - handle: xyz
-          type: user
-        - handle: abc
-          type: group # team handles are GitHub-only
-      instructions: "Assign when a PR modifies or adds sensitive fields (password, token, api_key, secret) to serialized models, removes error handling around credential or key access, or changes how secrets/connections are opened or closed."
-
+  # --------------------------------------------------------------------------
+  # 2. WHEN & WHAT GETS REVIEWED
+  #    "Which PRs and files does CodeRabbit look at?"
+  # --------------------------------------------------------------------------
   auto_review:
-    enabled: true
-    drafts: false
-    auto_incremental_review: true
-    auto_pause_after_reviewed_commits: 5 # set 0 to never pause on busy PRs
-    ignore_title_keywords: ["WIP", "DO NOT REVIEW"]
-    ignore_usernames: ["dependabot[bot]", "renovate[bot]"]
-    base_branches: ["develop", "release/.*"] # default branch is always reviewed
+    ignore_title_keywords: ["WIP", "DO NOT REVIEW"] # default: []
+    ignore_usernames: ["dependabot[bot]", "renovate[bot]"] # default: []
+    base_branches: ["develop", "release/.*"] # default: [] — default branch is always reviewed
 
-  path_filters:
-    # binaries / archives / media
-    - '!**/*.bin'
-    - '!**/*.zip'
-    - '!**/*.7z'
-    - '!**/*.jar'
-    - '!**/*.tar'
-    - '!**/*.gz'
-    - '!**/*.mp3'
-    - '!**/*.mp4'
-    - '!**/*.jpeg'
-    - '!**/*.jpg'
-    - '!**/*.png'
-    - '!**/*.pdf'
-    # generated / vendored / build output
+  path_filters: # default: [] — `!` excludes a path from review
+    # build output & dependencies
     - '!**/dist/**'
     - '!**/build/**'
     - '!**/node_modules/**'
     - '!**/vendor/**'
     - '!**/*.min.js'
-    - '!**/*.map'
-    - '!**/*.generated.*'
-    # lockfiles (dependency CVEs are still covered by OSV Scanner on manifest changes)
-    - '!**/package-lock.json'
-    - '!**/yarn.lock'
-    - '!**/pnpm-lock.yaml'
+    # binaries, archives & media
+    - '!**/*.{png,jpg,jpeg,gif,ico}'
+    - '!**/*.{mp3,mp4,pdf}'
+    - '!**/*.{zip,tar,gz,7z,jar,bin}'
 
-  path_instructions:
+  # --------------------------------------------------------------------------
+  # 3. REVIEW STYLE & PR OUTPUT
+  #    "How noisy is it, and what shows up on my PR?"
+  # --------------------------------------------------------------------------
+  profile: chill # default: chill — keep chill for trials; path instructions are written to match
+  poem: false # default: false
+  in_progress_fortune: false # default: true — quieter PRs for enterprise teams
+  review_details: true # default: false
+  review_status: true # default: true
+  fail_commit_status: true # default: false — surface review errors instead of failing silently
+
+  # --------------------------------------------------------------------------
+  # 4. REVIEW FOCUS (custom instructions)
+  #    "What should it pay attention to in my code?"
+  # --------------------------------------------------------------------------
+  path_instructions: # default: []
     - path: "**/*"
       instructions: |
         Review like a senior engineer preparing this change for production.
@@ -146,44 +131,27 @@ reviews:
         Treat as production-critical. Flag non-reversible migrations, locking operations on large tables,
         missing indexes for new foreign keys, and data backfills that are not batched.
 
-  finishing_touches:
-    docstrings:
-      enabled: true
-    unit_tests:
-      enabled: true
-    autofix: # "Fix comments" in the UI
-      enabled: true
-    simplify: # NEW, off by default
-      enabled: true
-    fix_ci: # NEW: GitHub + Azure DevOps, Team plan+
-      enabled: true
-    resolve_merge_conflict: # NEW
-      enabled: true
-    custom: # NEW: Custom Recipes — trigger with `@coderabbitai run <name>`
-      - name: "add structured logging"
-        instructions: |
-          For every new or changed function in this PR that performs I/O or calls an external service,
-          add structured log statements at entry, success, and failure using the project's existing logger.
-          Never log secrets, tokens, or PII; log identifiers only.
-      - name: "harden error handling"
-        instructions: |
-          For changed code paths, replace swallowed exceptions and bare catch blocks with explicit handling:
-          log with context, rethrow or return a typed error, and keep the existing public behavior unchanged.
+  # --------------------------------------------------------------------------
+  # 5. MERGE GATES & APPROVALS
+  #    "Can it block or approve merges?"
+  #    Built-in checks are off; only the custom checks below run.
+  # --------------------------------------------------------------------------
+  request_changes_workflow: false # default: false — set true to let `error` pre-merge checks block merges
+  allow_author_approval: false # default: true — authors can't `@coderabbitai approve/resolve` their own PRs
 
   pre_merge_checks:
-    override_requested_reviewers_only: true # NEW: PR author can't ignore failing checks
+    override_requested_reviewers_only: true # default: false — PR author can't ignore failing checks
     title:
-      mode: warning
-      requirements: "Start with a ticket key (e.g. XYZ-123) followed by a short imperative summary under 72 characters."
+      mode: "off" # default: warning
     description:
-      mode: warning
+      mode: "off" # default: warning
     issue_assessment:
-      mode: warning
+      mode: "off" # default: warning
     docstrings:
-      mode: "off" # enable with a threshold only if the team already enforces docstrings
-    custom_checks:
+      mode: "off" # default: warning
+    custom_checks: # default: []
       - name: "PII and sensitive data in logs"
-        mode: "warning" # move to "error" + request_changes_workflow once tuned
+        mode: "warning" # default: warning — move to "error" + request_changes_workflow once tuned
         instructions: |
           Fail if any log statement (Logger.info, Logger.debug, Logger.error, print, System.out)
           outputs fields that contain PII or sensitive data, including:
@@ -196,7 +164,7 @@ reviews:
           with no attached personal fields.
 
       - name: "Security checks"
-        mode: "warning"
+        mode: "warning" # default: warning
         instructions: |
           Fail if any of the following are detected:
           - Hardcoded credentials, API keys, or tokens in source or config files
@@ -205,57 +173,107 @@ reviews:
           - Integration credentials stored in plain text rather than the approved secrets store
           - TLS verification disabled on outbound HTTP integrations
 
-  post_merge_actions: # NEW (max 5)
+  # --------------------------------------------------------------------------
+  # 6. PR ORGANIZATION (labels & reviewers)
+  #    "Can it triage and route PRs for me?"
+  # --------------------------------------------------------------------------
+  # Labels
+  suggested_labels: true # default: true
+  auto_apply_labels: true # default: false
+  labeling_instructions: # default: []
+    - label: security-sensitive
+      instructions: Apply when the PR touches authentication, authorization, secrets handling, encryption, or PII fields.
+    - label: breaking-change
+      instructions: Apply when the PR removes or renames a public API, endpoint, event, or shared data-model field.
+    - label: "risk: high"
+      instructions: Apply when the change touches shared services, auth, payments, data migrations, or more than one deployable service.
+
+  # Reviewers
+  suggested_reviewers: true # default: true
+  auto_assign_reviewers: false # default: false
+  suggested_reviewers_instructions: # default: []
+    - reviewers:
+        - handle: xyz
+          type: user
+        - handle: abc
+          type: group # team handles are GitHub-only
+      instructions: "Assign when a PR modifies or adds sensitive fields (password, token, api_key, secret) to serialized models, removes error handling around credential or key access, or changes how secrets/connections are opened or closed."
+
+  # --------------------------------------------------------------------------
+  # 7. AUTOMATED FIXES & ACTIONS
+  #    "Can it write code or do things for me?"
+  # --------------------------------------------------------------------------
+  finishing_touches:
+    docstrings:
+      enabled: false # default: true
+    unit_tests:
+      enabled: false # default: true
+    autofix: # "Fix comments" in the UI
+      enabled: true # default: true
+    simplify:
+      enabled: false # default: false
+    fix_ci: # GitHub + Azure DevOps, Team plan+
+      enabled: true # default: true
+    resolve_merge_conflict:
+      enabled: true # default: true
+    custom: # default: [] — Custom Recipes, trigger with `@coderabbitai run <name>`
+      - name: "harden error handling"
+        instructions: |
+          For changed code paths, replace swallowed exceptions and bare catch blocks with explicit handling:
+          log with context, rethrow or return a typed error, and keep the existing public behavior unchanged.
+
+  post_merge_actions: # default: []
     - name: "Release notes entry"
       prompt: |
         Summarize the merged change as a single release-notes bullet aimed at end users.
         Include the linked ticket key if present. Skip if the PR only changes tests, CI, or docs.
 
-  tools:
-    presidio: # NEW: PII detection in changed files — complements the PII pre-merge check
-      enabled: true
-    trufflehog:
-      enabled: true
-    gitleaks:
-      enabled: true
-    osvScanner:
-      enabled: true
 
-chat:
-  auto_reply: true
-  allow_non_org_members: false # restrict chat to org members
-  integrations:
-    jira: # FIX: was nested under knowledge_base.chat, where it was silently ignored
-      usage: "enabled"
-      issue_template: | # NEW
-        ## Summary
-        ## Steps to Reproduce / Context
-        ## Acceptance Criteria
-
+# ----------------------------------------------------------------------------
+# 8. CONTEXT & MEMORY
+#    "What does CodeRabbit know beyond the diff?"
+# ----------------------------------------------------------------------------
 knowledge_base:
-  learnings:
-    scope: global # org-wide learnings
-    approval_delay: 0 # NEW: set 1–30 to let admins approve learnings before they apply
+  # Your team's written standards
   code_guidelines:
-    enabled: true
-    filePatterns:
+    filePatterns: # default: []
       - "**/CODING_GUIDELINES.md"
       - "**/docs/development-standards.md"
-      # NEW: pull standards from a central repo, optionally scoped to the files they govern
+      # Pull standards from a central repo, optionally scoped to the files they govern:
       # - "engineering-standards:backend/java.md"
       # - files: "engineering-standards:frontend/react.md"
       #   applyTo: "**/*.tsx,**/*.jsx"
-  automatic_linking_mode: auto # FIX: replaces deprecated automatic_repository_linking (no effect)
-  linked_repositories:
+
+  # Awareness of other repositories
+  automatic_linking_mode: auto # default: disabled
+  linked_repositories: # default: []
     - repository: "org/repo-name"
       instructions: >
         Flag any field renames or removals — repo-name/api_client.py references these field names directly (status, priority, title, id).
         Also flag any endpoint path changes that would break the frontend api_client.
         Check that endpoint paths match what repo-name/api_client.py expects:
         GET /tasks, POST /tasks, PATCH /tasks/{id}/complete, PATCH /tasks/{id}/start, DELETE /tasks/{id}
+
+  # Tickets & external context
   jira:
-    usage: "enabled"
-    project_keys:
+    usage: "enabled" # default: auto
+    project_keys: # default: []
       - "XYZ"
   mcp:
-    usage: "enabled"
+    usage: "enabled" # default: auto
+
+
+# ----------------------------------------------------------------------------
+# 9. CHAT & COLLABORATION
+#    "How do I talk to it?"
+# ----------------------------------------------------------------------------
+chat:
+  auto_reply: true # default: true
+  allow_non_org_members: false # default: true — restrict chat to org members
+  integrations:
+    jira:
+      usage: "enabled" # default: auto
+      issue_template: | # default: ""
+        ## Summary
+        ## Steps to Reproduce / Context
+        ## Acceptance Criteria
