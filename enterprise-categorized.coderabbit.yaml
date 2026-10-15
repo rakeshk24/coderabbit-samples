@@ -17,16 +17,6 @@
 #   8. Context & memory ........... knowledge_base
 #   9. Chat & collaboration ....... chat
 #
-#  Security scanners (Presidio, TruffleHog, Gitleaks, OSV Scanner, etc.) are on
-#  by default and run on every review, so they aren't configured here.
-#
-#  Settings left out are at their defaults (e.g. auto review and incremental
-#  review are on). Each setting below notes its default value.
-#
-#  Suggested path for new users:
-#    Day 1:   1, 2, 3     get reviews running at a comfortable noise level
-#    Week 1:  4, 8        teach it your standards and context
-#    Later:   5, 6, 7, 9  enforce gates, triage PRs, let it write fixes
 # ============================================================================
 
 
