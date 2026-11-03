@@ -27,10 +27,9 @@
 #        none exist. Don't invent files.
 #   e. linked_repositories
 #        Lets CodeRabbit catch changes here that break other repos (e.g. a
-#        renamed API field a frontend still reads). Look for repos this one
-#        shares a contract with: API clients, shared packages or SDKs,
-#        protobuf/OpenAPI specs, git submodules, service URLs in config.
-#        Add one entry per repo, with instructions naming what it depends on.
+#        renamed API field a frontend still reads). Identify the repos that
+#        consume this one (its APIs, models, packages, or events) and add one
+#        entry per consumer, with instructions naming what it depends on.
 #        If you can't identify any, ask the user which repos depend on this
 #        one before deleting the placeholder.
 #
