@@ -159,8 +159,9 @@ reviews:
   #    "Can it block or approve merges?"
   #    Built-in checks are off; only the custom checks below run.
   # --------------------------------------------------------------------------
-  request_changes_workflow: false # default: false — set true to let `error` pre-merge checks block merges
-  allow_author_approval: false # default: true — authors can't `@coderabbitai approve/resolve` their own PRs
+  auto_approvals:
+    enabled: false                 # default false
+    allow_author_approval: true   # default true; set false so authors can't @coderabbitai approve their own PRs
 
   pre_merge_checks:
     override_requested_reviewers_only: true # default: false — PR author can't ignore failing checks
@@ -174,7 +175,7 @@ reviews:
       mode: "off" # default: warning
     custom_checks: # default: []
       - name: "PII and sensitive data in logs"
-        mode: "warning" # default: warning — move to "error" + request_changes_workflow once tuned
+        mode: "warning" # default: warning — move to "error" once tuned to block approval
         instructions: |
           Fail if any log statement, logger call, or print/console output (in any language)
           outputs fields that contain PII or sensitive data, including:
